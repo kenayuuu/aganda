@@ -75,11 +75,15 @@
 
                     {{-- Dashboard --}}
 
-                    <a href="{{ route('admin.dashboard') }}"
+                    <a href="{{ auth()->user()->role === 'admin'
+                        ? route('admin.dashboard')
+                        : (auth()->user()->role === 'karyawan'
+                            ? route('karyawan.dashboard')
+                            : route('member.dashboard')) }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition
-                            {{ request()->routeIs('admin.dashboard')
-                                ? 'bg-red-50 text-red-600'
-                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+        {{ request()->routeIs('admin.dashboard', 'karyawan.dashboard', 'member.dashboard')
+            ? 'bg-red-50 text-red-600'
+            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
 
                         <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
@@ -128,20 +132,18 @@
 
                     {{-- Struktur Group --}}
 
-                    <a href="{{ isset($group) ? route('aganda.groups.structure', $group->id) : route('aganda.groups.index') }}"
+                    <a href="{{ auth()->user()->role === 'admin' ? route('aganda.structures.admin') : route('aganda.structures.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-        {{ request()->routeIs('aganda.groups.structure')
-            ? 'bg-red-50 text-red-600'
-            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+    {{ request()->routeIs('aganda.structures.admin', 'aganda.structures.index')
+        ? 'bg-red-50 text-red-600'
+        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
 
                         <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                                 d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
 
-                        <span>
-                            Struktur Group
-                        </span>
+                        <span>Struktur Group</span>
 
                     </a>
 
@@ -161,138 +163,152 @@
 
                     {{-- Semua Member --}}
 
-                    <a href="#"
-                        class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-                               text-slate-500 hover:bg-slate-50 hover:text-slate-700">
-
-                        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-                        </svg>
-
-                        <span>
-                            Semua Member
-                        </span>
-
-                    </a>
-
-
-                    {{-- Downline --}}
-
-                    <a href="#"
+                    <a href="{{ route('admin.members.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-                               text-slate-500 hover:bg-slate-50 hover:text-slate-700">
-
+    {{ request()->routeIs('admin.members.*')
+        ? 'bg-red-50 text-red-600'
+        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
                         <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                d="M7 20l5-5 5 5M12 15V4M5 8l7-4 7 4" />
+                                d="M15 19a3 3 0 1 0-6 0m6 0H9m6 0h4a2 2 0 0 0 2-2v-1a5 5 0 0 0-5-5h-1m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm4 5a3 3 0 1 0 0-6" />
                         </svg>
 
-                        <span>
-                            Downline
-                        </span>
-
+                        <span>Semua Member</span>
                     </a>
 
-                </div>
-
-
-                {{-- =================================================
+                    {{-- =================================================
                     KEUANGAN
                 ================================================== --}}
 
-                <div class="mb-7">
+                    <div class="mb-7">
 
-                    <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                        Keuangan
-                    </p>
+                        <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            Keuangan
+                        </p>
 
 
-                    {{-- Bonus --}}
+                        {{-- Bonus --}}
 
-                    <a href="#"
-                        class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
+                        <div class="mb-1">
+                            <a href="{{ route('admin.bonus.index') }}"
+                                class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
+        {{ request()->routeIs('admin.bonus.index')
+            ? 'bg-red-50 text-red-600'
+            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+
+                                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M12 8c-2.21 0-4 1.12-4 2.5S9.79 13 12 13s4 1.12 4 2.5S14.21 18 12 18M12 5v14" />
+                                </svg>
+
+                                <span>Bonus</span>
+                            </a>
+
+                            <div class="ml-8 mt-1 space-y-1">
+                                <a href="{{ route('admin.bonus.payments.index') }}"
+                                    class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition
+            {{ request()->routeIs('admin.bonus.payments.*')
+                ? 'bg-red-50 text-red-600'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+
+                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                            stroke-linejoin="round" d="M3 7h18M5 11h14M7 15h10M9 19h6" />
+                                    </svg>
+
+                                    <span>Pembayaran</span>
+                                </a>
+                            </div>
+                        </div>
+
+
+                        {{-- Reward --}}
+
+                        <a href="#"
+                            class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
                                text-slate-500 hover:bg-slate-50 hover:text-slate-700">
 
-                        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                d="M12 8c-2.21 0-4 1.12-4 2.5S9.79 13 12 13s4 1.12 4 2.5S14.21 18 12 18M12 5v14" />
-                        </svg>
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M12 3l2.7 5.46L21 9.38l-4.5 4.38 1.06 6.2L12 17.05 6.44 20l1.06-6.24L3 9.38l6.3-.92L12 3z" />
+                            </svg>
 
-                        <span>
-                            Bonus
-                        </span>
+                            <span>
+                                Reward
+                            </span>
 
-                    </a>
+                        </a>
 
 
-                    {{-- Reward --}}
+                        {{-- Riwayat --}}
 
-                    <a href="#"
-                        class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
+                        <a href="#"
+                            class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
                                text-slate-500 hover:bg-slate-50 hover:text-slate-700">
 
-                        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                d="M12 3l2.7 5.46L21 9.38l-4.5 4.38 1.06 6.2L12 17.05 6.44 20l1.06-6.24L3 9.38l6.3-.92L12 3z" />
-                        </svg>
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M9 5h6M9 3h6v2H9V3zM7 5H5v16h14V5h-2M9 10h6M9 14h6M9 18h4" />
+                            </svg>
 
-                        <span>
-                            Reward
-                        </span>
+                            <span>
+                                Riwayat
+                            </span>
 
-                    </a>
+                        </a>
 
-
-                    {{-- Riwayat --}}
-
-                    <a href="#"
-                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-                               text-slate-500 hover:bg-slate-50 hover:text-slate-700">
-
-                        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                d="M9 5h6M9 3h6v2H9V3zM7 5H5v16h14V5h-2M9 10h6M9 14h6M9 18h4" />
-                        </svg>
-
-                        <span>
-                            Riwayat
-                        </span>
-
-                    </a>
-
-                </div>
+                    </div>
 
 
-                {{-- =================================================
+                    {{-- =================================================
                     SYSTEM
                 ================================================== --}}
 
-                <div>
+                    <div>
 
-                    <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                        System
-                    </p>
+                        <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            System
+                        </p>
 
 
-                    {{-- Pengaturan --}}
+                        {{-- Pengaturan --}}
 
-                    <a href="#"
-                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
+                        <a href="#"
+                            class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
                                text-slate-500 hover:bg-slate-50 hover:text-slate-700">
 
-                        <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM19.4 15a1.7 1.7 0 000-3l1.1-.85-1.8-3.1-1.3.5a1.7 1.7 0 00-2.5-1.5L14.8 5h-3.6l-.1 1.5a1.7 1.7 0 00-2.5 1.5l-1.3-.5-1.8 3.1L6.6 11a1.7 1.7 0 000 3l-1.1.85 1.8 3.1 1.3-.5a1.7 1.7 0 002.5 1.5l.1 1.5h3.6l.1-1.5a1.7 1.7 0 002.5-1.5l1.3.5 1.8-3.1L19.4 15z" />
-                        </svg>
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM19.4 15a1.7 1.7 0 000-3l1.1-.85-1.8-3.1-1.3.5a1.7 1.7 0 00-2.5-1.5L14.8 5h-3.6l-.1 1.5a1.7 1.7 0 00-2.5 1.5l-1.3-.5-1.8 3.1L6.6 11a1.7 1.7 0 000 3l-1.1.85 1.8 3.1 1.3-.5a1.7 1.7 0 002.5 1.5l.1 1.5h3.6l.1-1.5a1.7 1.7 0 002.5-1.5l1.3.5 1.8-3.1L19.4 15z" />
+                            </svg>
 
-                        <span>
-                            Pengaturan
-                        </span>
+                            <span>
+                                Pengaturan
+                            </span>
 
-                    </a>
+                        </a>
 
-                </div>
+
+                        {{-- Profile --}}
+                        <a href="{{ route('aganda.profile.edit') }}"
+                            class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition
+    {{ request()->routeIs('aganda.profile.edit')
+        ? 'bg-red-50 text-red-600'
+        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0" />
+                            </svg>
+
+                            <span>
+                                Kelola Profil
+                            </span>
+                        </a>
+
+                    </div>
 
             </nav>
 
@@ -410,14 +426,16 @@
 
                         {{-- Avatar --}}
 
-                        <div
-                            class="flex h-10 w-10 items-center justify-center
-                                   rounded-xl bg-red-100
-                                   font-bold text-red-600">
+                        @if (auth()->user()->avatar)
+                            <img src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="Avatar"
+                                class="h-10 w-10 rounded-xl object-cover">
+                        @else
+                            <div
+                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 font-bold text-red-600">
 
-                            {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
-
-                        </div>
+                                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                            </div>
+                        @endif
 
                     </div>
 

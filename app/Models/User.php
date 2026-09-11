@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements CanResetPasswordContract
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, CanResetPasswordTrait;
 
     protected $fillable = [
         'name',
         'email',
+        'avatar',
         'password',
         'phone',
         'address',
@@ -56,6 +59,54 @@ class User extends Authenticatable
         return $this->hasMany(
             User::class,
             'parent_id'
+        );
+    }
+
+    public function calon()
+    {
+        return $this->belongsTo(
+            Calon::class,
+            'calon_id'
+        );
+    }
+
+    public function calonPayments()
+    {
+        return $this->hasMany(
+            CalonPayment::class,
+            'confirmed_by'
+        );
+    }
+
+    public function bonusTransactions()
+    {
+        return $this->hasMany(
+            BonusTransaction::class,
+            'user_id'
+        );
+    }
+
+    public function bonusAllocations()
+    {
+        return $this->hasMany(
+            BonusAllocation::class,
+            'user_id'
+        );
+    }
+
+    public function bonusWithdrawals()
+    {
+        return $this->hasMany(
+            BonusWithdrawal::class,
+            'user_id'
+        );
+    }
+
+    public function processedWithdrawals()
+    {
+        return $this->hasMany(
+            BonusWithdrawal::class,
+            'processed_by'
         );
     }
 }

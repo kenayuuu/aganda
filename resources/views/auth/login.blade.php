@@ -109,6 +109,21 @@
             width: auto;
         }
 
+        .forgot-password {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 18px;
+            text-align: right;
+            color: #c60c00;
+            font-size: 13px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+
         .hint {
             margin-top: 15px;
             text-align: center;
@@ -128,22 +143,16 @@
             Silakan masuk ke akun Anda
         </p>
 
-
-        {{-- Error --}}
         @if ($errors->any())
             <div class="error">
                 {{ $errors->first() }}
             </div>
         @endif
 
-
-        {{-- Login Form --}}
         <form action="{{ route('login.process') }}" method="POST">
 
             @csrf
 
-
-            {{-- Email / Member ID --}}
             <div class="form-group">
 
                 <label for="login">
@@ -155,8 +164,6 @@
 
             </div>
 
-
-            {{-- Password --}}
             <div class="form-group">
 
                 <label for="password">
@@ -168,8 +175,6 @@
 
             </div>
 
-
-            {{-- Remember Me --}}
             <div class="remember">
 
                 <label>
@@ -184,14 +189,15 @@
 
             </div>
 
+            <a href="{{ route('password.request') }}" class="forgot-password">
+                Lupa Password?
+            </a>
 
-            {{-- Login Button --}}
             <button type="submit">
                 Login
             </button>
 
         </form>
-
 
         <div class="hint">
             Gunakan email atau Member ID untuk masuk.

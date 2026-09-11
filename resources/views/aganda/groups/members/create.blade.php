@@ -196,7 +196,7 @@
 
                         <div class="mt-2">
 
-                            @if ($group->status === 'active' && auth()->user()->role === 'karyawan')
+                            @if ($group->status === 'active')
                                 <span
                                     class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
                                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>

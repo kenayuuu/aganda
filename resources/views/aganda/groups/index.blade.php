@@ -254,7 +254,7 @@
 
                                     {{-- Status --}}
 
-                                    @if ($group->status === 'active' && auth()->user()->role === 'karyawan')
+                                    @if ($group->status === 'active')
                                         <span
                                             class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
 

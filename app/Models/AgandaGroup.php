@@ -38,4 +38,12 @@ class AgandaGroup extends Model
             'group_id'
         );
     }
+
+    public function pairs()
+    {
+        return $this->hasMany(
+            AgandaPair::class,
+            'group_id'
+        );
+    }
 }

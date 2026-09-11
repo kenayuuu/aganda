@@ -185,7 +185,7 @@
                     {{ $group->kode_group }}
                 </h1>
 
-                @if ($group->status === 'active' && auth()->user()->role === 'karyawan')
+                @if ($group->status === 'active')
                     <span
                         class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
@@ -225,6 +225,20 @@
 
                 Kembali
             </a>
+
+            @if (auth()->id() === $group->owner_id)
+                <button type="button" onclick="openDeleteModal()"
+                    class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700">
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h14" />
+                    </svg>
+
+                    Hapus Group
+                </button>
+            @endif
 
         </div>
 
@@ -397,7 +411,7 @@
 
                 <div class="mt-2">
 
-                    @if ($group->status === 'active' && auth()->user()->role === 'karyawan')
+                    @if ($group->status === 'active')
                         <span
                             class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
                             Active
@@ -678,5 +692,101 @@
         </div>
 
     </div>
+
+    <div id="deleteModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm">
+
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+            <div class="flex items-start gap-4">
+
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 9v4m0 4h.01M10.29 3.86l-7.82 13a2 2 0 001.71 3h15.64a2 2 0 001.71-3l-7.82-13a2 2 0 00-3.42 0z" />
+
+                    </svg>
+
+                </div>
+
+                <div class="min-w-0 flex-1">
+
+                    <h3 class="text-lg font-bold text-slate-900">
+                        Hapus Group?
+                    </h3>
+
+                    <p class="mt-2 text-sm leading-6 text-slate-500">
+                        Apakah kamu yakin ingin menghapus group
+                        <span class="font-semibold text-slate-700">
+                            {{ $group->kode_group }}
+                        </span>?
+                    </p>
+
+                    <p class="mt-2 text-sm leading-6 text-red-600">
+                        Semua data anggota yang terdaftar pada group ini juga akan dihapus.
+                        Data akun anggota tetap aman.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+
+                <button type="button" onclick="closeDeleteModal()"
+                    class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+                    Batal
+                </button>
+
+                <form action="{{ route('aganda.groups.destroy', $group->id) }}" method="POST">
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700">
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h14" />
+
+                        </svg>
+
+                        Ya, Hapus Group
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        function openDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        document.getElementById('deleteModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeDeleteModal();
+            }
+        });
+    </script>
 
 @endsection
