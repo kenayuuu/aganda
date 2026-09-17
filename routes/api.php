@@ -1,25 +1,29 @@
 <?php
 
+use App\Http\Controllers\Api\AdminUserController;
+use App\Http\Controllers\Api\AdminWithdrawalController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BonusController;
+use App\Http\Controllers\Api\CalonPaymentController;
 use App\Http\Controllers\Api\DashboardController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\MemberController;
-use App\Http\Controllers\Api\StructureController;
 use App\Http\Controllers\Api\PairingController;
-use App\Http\Controllers\Api\BonusController;
+use App\Http\Controllers\Api\PackageController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\StructureController;
 use App\Http\Controllers\Api\WithdrawalController;
-use App\Http\Controllers\Api\AdminWithdrawalController;
+use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
+    Route::get('/packages', [PackageController::class, 'index']);
+    Route::get('/packages/{package}', [PackageController::class, 'show']);
     Route::get('/groups', [GroupController::class, 'index']);
     Route::post('/groups', [GroupController::class, 'store']);
     Route::get('/groups/{group}', [GroupController::class, 'show']);
@@ -29,11 +33,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/groups/{group}/structure', [StructureController::class, 'show']);
     Route::get('/groups/{group}/pairing/create', [PairingController::class, 'create']);
     Route::post('/groups/{group}/pairing', [PairingController::class, 'store']);
+    Route::get('/calon-payments', [CalonPaymentController::class, 'index']);
+    Route::get('/calon-payments/candidates', [CalonPaymentController::class, 'candidates']);
+    Route::post('/calon-payments', [CalonPaymentController::class, 'store']);
+    Route::put('/calon-payments/{payment}/cancel', [CalonPaymentController::class, 'cancel']);
     Route::get('/bonus', [BonusController::class, 'index']);
     Route::get('/bonus/history', [BonusController::class, 'history']);
     Route::post('/bonus/allocate-package', [BonusController::class, 'allocatePackage']);
     Route::get('/withdrawals', [WithdrawalController::class, 'index']);
     Route::post('/withdrawals', [WithdrawalController::class, 'store']);
+    Route::get('/admin/users', [AdminUserController::class, 'index']);
+    Route::get('/admin/users/{user}', [AdminUserController::class, 'show']);
     Route::get('/admin/withdrawals', [AdminWithdrawalController::class, 'index']);
     Route::put('/admin/withdrawals/{withdrawal}/approve', [AdminWithdrawalController::class, 'approve']);
     Route::put('/admin/withdrawals/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject']);
