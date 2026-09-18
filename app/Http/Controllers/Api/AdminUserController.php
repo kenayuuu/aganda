@@ -22,15 +22,19 @@ class AdminUserController extends Controller
         $this->authorizeAdmin($request);
 
         $query = User::query()
-            ->with('parent')
+            ->with([
+                'parent',
+                'calon.packageKegiatan',
+            ])
+            ->withCount('children')
             ->whereIn('role', ['karyawan', 'member'])
             ->latest('id');
 
-        if ($request->role) {
+        if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
 
-        if ($request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
 
             $query->where(function ($query) use ($search) {
@@ -41,12 +45,22 @@ class AdminUserController extends Controller
             });
         }
 
-        $users = $query->get();
+        $users = $query->paginate(10);
 
         return response()->json([
-            'users' => $users->map(function ($user) {
-                return $this->formatUser($user);
-            })->values(),
+            'users' => $users->getCollection()
+                ->map(function ($user) {
+                    return $this->formatUser($user);
+                })
+                ->values(),
+            'pagination' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+                'from' => $users->firstItem(),
+                'to' => $users->lastItem(),
+            ],
         ]);
     }
 
@@ -64,6 +78,8 @@ class AdminUserController extends Controller
             'parent',
             'calon.packageKegiatan',
         ]);
+
+        $user->loadCount('children');
 
         return response()->json([
             'user' => $this->formatUser($user, true),
@@ -88,23 +104,28 @@ class AdminUserController extends Controller
                 'member_id' => $user->parent->member_id,
                 'role' => $user->parent->role,
             ] : null,
+            'total_children' => $user->children_count ?? 0,
+            'calon' => $user->calon ? [
+                'id' => $user->calon->id,
+                'name' => $user->calon->nama_lengkap
+                    ?? $user->calon->name
+                    ?? '',
+                'nik' => $user->calon->nik,
+                'no_hp' => $user->calon->no_telepon
+                    ?? $user->calon->no_hp,
+                'alamat' => $user->calon->alamat,
+            ] : null,
             'created_at' => $user->created_at,
         ];
 
-        if ($detail) {
-            $data['calon'] = $user->calon ? [
-                'id' => $user->calon->id,
-                'nama_lengkap' => $user->calon->nama_lengkap,
-                'email' => $user->calon->email,
-                'no_telepon' => $user->calon->no_telepon,
-                'package' => $user->calon->packageKegiatan ? [
-                    'id' => $user->calon->packageKegiatan->id,
-                    'name' => $user->calon->packageKegiatan->nama_paket
-                        ?? $user->calon->packageKegiatan->name
-                        ?? null,
-                    'harga' => (float) $user->calon->packageKegiatan->harga,
-                    'deposit' => (float) $user->calon->packageKegiatan->deposit,
-                ] : null,
+        if ($detail && $user->calon) {
+            $data['calon']['package'] = $user->calon->packageKegiatan ? [
+                'id' => $user->calon->packageKegiatan->id,
+                'name' => $user->calon->packageKegiatan->nama_paket
+                    ?? $user->calon->packageKegiatan->name
+                    ?? null,
+                'harga' => (float) $user->calon->packageKegiatan->harga,
+                'deposit' => (float) $user->calon->packageKegiatan->deposit,
             ] : null;
         }
 

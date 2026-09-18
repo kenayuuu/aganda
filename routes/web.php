@@ -14,6 +14,10 @@ Route::get('/', function () {
     return view('homepage');
 })->name('homepage');
 
+Route::get('/brosur', function () {
+    return redirect('/#brosur');
+})->name('brosur');
+
 Route::get('/login', [AuthController::class, 'showLogin'])
     ->name('login');
 

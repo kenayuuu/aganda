@@ -40,6 +40,72 @@
             }
         }
     </script>
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+        }
+
+        .homepage-nav-link {
+            position: relative;
+            transition: color 220ms ease, transform 220ms ease;
+        }
+
+        .homepage-nav-link::after {
+            position: absolute;
+            right: 0;
+            bottom: -8px;
+            left: 0;
+            height: 2px;
+            border-radius: 999px;
+            background: #e8c34a;
+            content: '';
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform 220ms ease;
+        }
+
+        .homepage-nav-link:hover,
+        .homepage-nav-link.is-active {
+            color: #f7df8a;
+            transform: translateY(-1px);
+        }
+
+        .homepage-nav-link:hover::after,
+        .homepage-nav-link.is-active::after {
+            transform: scaleX(1);
+        }
+
+        .homepage-section-reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 700ms ease, transform 700ms ease;
+        }
+
+        .homepage-section-reveal.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .homepage-nav-link,
+            .homepage-nav-link::after,
+            .homepage-section-reveal {
+                transition: none;
+            }
+
+            .homepage-section-reveal {
+                opacity: 1;
+                transform: none;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-[#faf8f1] text-slate-800 antialiased">
@@ -61,27 +127,74 @@
             </a>
 
             <div class="hidden items-center gap-8 md:flex">
-                <a href="#tentang" class="text-sm font-medium text-white/80 transition hover:text-gold-300">
+                <a href="#tentang" data-nav-link class="homepage-nav-link text-sm font-medium text-white/80">
                     Tentang
                 </a>
-                <a href="#sistem" class="text-sm font-medium text-white/80 transition hover:text-gold-300">
+                <a href="#sistem" data-nav-link class="homepage-nav-link text-sm font-medium text-white/80">
                     Sistem
                 </a>
-                <a href="#bonus" class="text-sm font-medium text-white/80 transition hover:text-gold-300">
+                <a href="#bonus" data-nav-link class="homepage-nav-link text-sm font-medium text-white/80">
                     Bonus
                 </a>
-                <a href="#reward" class="text-sm font-medium text-white/80 transition hover:text-gold-300">
+                <a href="#reward" data-nav-link class="homepage-nav-link text-sm font-medium text-white/80">
                     Reward
                 </a>
-                <a href="#cara-bergabung" class="text-sm font-medium text-white/80 transition hover:text-gold-300">
+                <a href="#cara-bergabung" data-nav-link class="homepage-nav-link text-sm font-medium text-white/80">
                     Cara Bergabung
+                </a>
+                <a href="#brosur" data-nav-link class="homepage-nav-link text-sm font-medium text-white/80">
+                    Brosur
                 </a>
             </div>
 
+            <button id="mobile-menu-button" type="button"
+                class="flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 text-white transition hover:border-gold-400 hover:text-gold-400 md:hidden"
+                aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="mobile-menu">
+                <span class="sr-only">Buka menu</span>
+                <span class="flex w-5 flex-col gap-1.5">
+                    <span class="mobile-menu-bar h-0.5 w-full rounded-full bg-current transition-transform"></span>
+                    <span class="mobile-menu-bar h-0.5 w-full rounded-full bg-current transition-opacity"></span>
+                    <span class="mobile-menu-bar h-0.5 w-full rounded-full bg-current transition-transform"></span>
+                </span>
+            </button>
+
             <a href="{{ route('login') }}"
-                class="rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-5 py-2.5 text-sm font-bold text-[#3b2b05] shadow-lg transition hover:scale-105 hover:from-gold-300 hover:to-gold-400">
+                class="hidden rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-5 py-2.5 text-sm font-bold text-[#3b2b05] shadow-lg transition hover:scale-105 hover:from-gold-300 hover:to-gold-400 sm:inline-flex">
                 Login
             </a>
+        </div>
+
+        <div id="mobile-menu" class="hidden border-t border-white/10 bg-[#0b2f1f] px-5 pb-5 pt-3 md:hidden">
+            <div class="flex flex-col gap-1">
+                <a href="#tentang" data-nav-link
+                    class="homepage-nav-link rounded-lg px-3 py-3 text-sm font-medium text-white/80 hover:bg-white/10">
+                    Tentang
+                </a>
+                <a href="#sistem" data-nav-link
+                    class="homepage-nav-link rounded-lg px-3 py-3 text-sm font-medium text-white/80 hover:bg-white/10">
+                    Sistem
+                </a>
+                <a href="#bonus" data-nav-link
+                    class="homepage-nav-link rounded-lg px-3 py-3 text-sm font-medium text-white/80 hover:bg-white/10">
+                    Bonus
+                </a>
+                <a href="#reward" data-nav-link
+                    class="homepage-nav-link rounded-lg px-3 py-3 text-sm font-medium text-white/80 hover:bg-white/10">
+                    Reward
+                </a>
+                <a href="#cara-bergabung" data-nav-link
+                    class="homepage-nav-link rounded-lg px-3 py-3 text-sm font-medium text-white/80 hover:bg-white/10">
+                    Cara Bergabung
+                </a>
+                <a href="#brosur" data-nav-link
+                    class="homepage-nav-link rounded-lg px-3 py-3 text-sm font-medium text-white/80 hover:bg-white/10">
+                    Brosur
+                </a>
+                <a href="{{ route('login') }}"
+                    class="mt-2 rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-4 py-3 text-center text-sm font-bold text-[#3b2b05]">
+                    Login
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -127,7 +240,7 @@
                     </p>
 
                     <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                        <a href="http://127.0.0.1:8080/paket-umroh-haji" target="_blank" rel="noopener noreferrer"
+                        <a href="#brosur"
                             class="rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-7 py-3.5 text-center font-bold text-[#3b2b05] shadow-gold transition hover:-translate-y-1">
                             Mulai Sekarang
                         </a>
@@ -209,434 +322,12 @@
             </div>
         </section>
 
-        <section id="tentang" class="scroll-mt-24 bg-white py-20 lg:py-28">
-            <div class="mx-auto max-w-7xl px-5 lg:px-8">
-
-                <div class="mx-auto max-w-3xl text-center">
-                    <span class="text-sm font-bold uppercase tracking-[0.25em] text-emerald-600">
-                        Tentang AGANDA
-                    </span>
-
-                    <h2 class="mt-3 text-3xl font-black text-[#0b2f1f] sm:text-4xl">
-                        Menjadi Agen, Membuka Peluang
-                    </h2>
-
-                    <p class="mt-5 leading-8 text-slate-600">
-                        AGANDA merupakan sistem keagenan Agent Ganda Asia Andalas Wisata
-                        yang menggabungkan pemasaran produk perjalanan dengan sistem bonus
-                        dan reward untuk memberikan peluang berkembang bagi setiap agen.
-                    </p>
-                </div>
-
-                <div class="mt-14 grid gap-6 md:grid-cols-3">
-                    <div class="rounded-3xl border border-emerald-100 bg-emerald-50/60 p-7">
-                        <div
-                            class="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0b2f1f] text-2xl text-gold-400">
-                            ✓
-                        </div>
-                        <h3 class="mt-6 text-xl font-bold text-[#0b2f1f]">
-                            Sistem Terstruktur
-                        </h3>
-                        <p class="mt-3 leading-7 text-slate-600">
-                            Setiap agen memiliki struktur jaringan yang jelas sehingga
-                            perkembangan jaringan dapat dipantau dengan lebih mudah.
-                        </p>
-                    </div>
-
-                    <div class="rounded-3xl border border-gold-100 bg-[#fffaf0] p-7">
-                        <div
-                            class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-500 text-2xl text-white">
-                            Rp
-                        </div>
-                        <h3 class="mt-6 text-xl font-bold text-[#0b2f1f]">
-                            Bonus Menarik
-                        </h3>
-                        <p class="mt-3 leading-7 text-slate-600">
-                            Tersedia bonus sponsor dan bonus pasangan yang diberikan
-                            berdasarkan aktivitas dan pencapaian jaringan.
-                        </p>
-                    </div>
-
-                    <div class="rounded-3xl border border-emerald-100 bg-emerald-50/60 p-7">
-                        <div
-                            class="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0b2f1f] text-2xl text-gold-400">
-                            ★
-                        </div>
-                        <h3 class="mt-6 text-xl font-bold text-[#0b2f1f]">
-                            Reward
-                        </h3>
-                        <p class="mt-3 leading-7 text-slate-600">
-                            Pencapaian jaringan dapat memberikan kesempatan memperoleh
-                            berbagai reward menarik sesuai target yang ditentukan.
-                        </p>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <section id="sistem" class="scroll-mt-24 bg-[#f4f7f1] py-20 lg:py-28">
-            <div class="mx-auto max-w-7xl px-5 lg:px-8">
-
-                <div class="grid items-center gap-14 lg:grid-cols-2">
-
-                    <div>
-                        <span class="text-sm font-bold uppercase tracking-[0.25em] text-emerald-600">
-                            Sistem Matahari
-                        </span>
-
-                        <h2 class="mt-3 text-3xl font-black leading-tight text-[#0b2f1f] sm:text-4xl">
-                            Sponsor Tanpa Batas,
-                            <span class="text-gold-600">Peluang Berlipat</span>
-                        </h2>
-
-                        <p class="mt-5 leading-8 text-slate-600">
-                            Dalam sistem AGANDA, seorang agen dapat mensponsori anggota
-                            secara langsung tanpa batas. Setiap anggota yang berhasil
-                            disponsori menjadi bagian dari jaringan agen.
-                        </p>
-
-                        <div class="mt-8 space-y-4">
-                            <div class="flex gap-4 rounded-2xl bg-white p-5 shadow-sm">
-                                <div
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 font-black text-emerald-700">
-                                    1
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-[#0b2f1f]">
-                                        Sponsor Anggota
-                                    </h3>
-                                    <p class="mt-1 text-sm leading-6 text-slate-600">
-                                        Agen mengajak dan mensponsori anggota baru ke dalam jaringan.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-4 rounded-2xl bg-white p-5 shadow-sm">
-                                <div
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-100 font-black text-gold-700">
-                                    2
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-[#0b2f1f]">
-                                        Mendapat Bonus Sponsor
-                                    </h3>
-                                    <p class="mt-1 text-sm leading-6 text-slate-600">
-                                        Setiap anggota yang berhasil disponsori memberikan bonus sponsor
-                                        sesuai ketentuan AGANDA.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-4 rounded-2xl bg-white p-5 shadow-sm">
-                                <div
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 font-black text-emerald-700">
-                                    3
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-[#0b2f1f]">
-                                        Bangun Jaringan
-                                    </h3>
-                                    <p class="mt-1 text-sm leading-6 text-slate-600">
-                                        Jaringan dapat berkembang melalui sponsor langsung maupun
-                                        perkembangan anggota di bawah jaringan.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="relative">
-                        <div class="rounded-[2rem] bg-[#0b2f1f] p-8 shadow-2xl sm:p-10">
-
-                            <div class="text-center">
-                                <div
-                                    class="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-4 border-gold-400 bg-white text-3xl font-black text-[#0b2f1f]">
-                                    A
-                                </div>
-
-                                <div class="mx-auto mt-6 h-10 w-px bg-gold-400"></div>
-
-                                <div class="mx-auto flex max-w-xs justify-between">
-                                    <div class="h-px w-1/3 bg-gold-400"></div>
-                                    <div class="h-px w-1/3 bg-gold-400"></div>
-                                    <div class="h-px w-1/3 bg-gold-400"></div>
-                                </div>
-
-                                <div class="mt-0 grid grid-cols-3 gap-3">
-                                    <div class="flex flex-col items-center">
-                                        <div
-                                            class="flex h-14 w-14 items-center justify-center rounded-full border-2 border-gold-400 bg-emerald-700 text-lg text-white">
-                                            A
-                                        </div>
-                                        <span class="mt-2 text-xs text-emerald-100">Sponsor</span>
-                                    </div>
-
-                                    <div class="flex flex-col items-center">
-                                        <div
-                                            class="flex h-14 w-14 items-center justify-center rounded-full border-2 border-gold-400 bg-emerald-700 text-lg text-white">
-                                            B
-                                        </div>
-                                        <span class="mt-2 text-xs text-emerald-100">Sponsor</span>
-                                    </div>
-
-                                    <div class="flex flex-col items-center">
-                                        <div
-                                            class="flex h-14 w-14 items-center justify-center rounded-full border-2 border-gold-400 bg-emerald-700 text-lg text-white">
-                                            C
-                                        </div>
-                                        <span class="mt-2 text-xs text-emerald-100">Sponsor</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-10 rounded-2xl bg-white/10 p-6 text-center">
-                                <div class="text-sm font-semibold text-emerald-100">
-                                    BONUS SPONSOR
-                                </div>
-                                <div class="mt-2 text-4xl font-black text-gold-400">
-                                    Rp3.000.000
-                                </div>
-                                <div class="mt-2 text-sm text-white/60">
-                                    untuk setiap anggota yang berhasil disponsori
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <section id="bonus" class="scroll-mt-24 bg-white py-20 lg:py-28">
-            <div class="mx-auto max-w-7xl px-5 lg:px-8">
-
-                <div class="mx-auto max-w-3xl text-center">
-                    <span class="text-sm font-bold uppercase tracking-[0.25em] text-emerald-600">
-                        Bonus AGANDA
-                    </span>
-
-                    <h2 class="mt-3 text-3xl font-black text-[#0b2f1f] sm:text-4xl">
-                        Bonus Cash yang Menarik
-                    </h2>
-
-                    <p class="mt-5 leading-8 text-slate-600">
-                        Selain bonus sponsor, AGANDA memiliki bonus pasangan yang
-                        diperoleh ketika dua agen baru membentuk pasangan sesuai
-                        struktur jaringan.
-                    </p>
-                </div>
-
-                <div class="mt-14 grid gap-6 lg:grid-cols-2">
-
-                    <div
-                        class="group rounded-[2rem] border border-gold-200 bg-gradient-to-br from-[#fffdf5] to-[#fff7dc] p-8 shadow-gold transition hover:-translate-y-1">
-                        <div class="flex items-start justify-between gap-5">
-                            <div>
-                                <span
-                                    class="inline-flex rounded-full bg-gold-500 px-3 py-1 text-xs font-bold text-white">
-                                    BONUS SPONSOR
-                                </span>
-
-                                <h3 class="mt-5 text-2xl font-black text-[#0b2f1f]">
-                                    Bonus Cash Rp3 Juta
-                                </h3>
-
-                                <p class="mt-3 leading-7 text-slate-600">
-                                    Setiap anggota yang berhasil disponsori memberikan
-                                    kesempatan memperoleh bonus sponsor sesuai ketentuan sistem.
-                                </p>
-                            </div>
-
-                            <div
-                                class="hidden h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#0b2f1f] text-xl font-black text-gold-400 sm:flex">
-                                Rp
-                            </div>
-                        </div>
-
-                        <div class="mt-8 rounded-2xl bg-[#0b2f1f] p-6 text-center">
-                            <div class="text-4xl font-black text-gold-400">
-                                Rp3.000.000
-                            </div>
-                            <div class="mt-2 text-sm text-white/60">
-                                bonus sponsor
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="group rounded-[2rem] border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-8 shadow-lg transition hover:-translate-y-1">
-                        <div class="flex items-start justify-between gap-5">
-                            <div>
-                                <span
-                                    class="inline-flex rounded-full bg-emerald-700 px-3 py-1 text-xs font-bold text-white">
-                                    BONUS PASANGAN
-                                </span>
-
-                                <h3 class="mt-5 text-2xl font-black text-[#0b2f1f]">
-                                    Bonus Cash Rp500 Ribu
-                                </h3>
-
-                                <p class="mt-3 leading-7 text-slate-600">
-                                    Ketika terdapat dua agen baru yang membentuk pasangan
-                                    kiri dan kanan sesuai struktur, agen dapat memperoleh bonus pasangan.
-                                </p>
-                            </div>
-
-                            <div
-                                class="hidden h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gold-500 text-xl font-black text-white sm:flex">
-                                Rp
-                            </div>
-                        </div>
-
-                        <div class="mt-8 rounded-2xl bg-emerald-700 p-6 text-center">
-                            <div class="text-4xl font-black text-gold-300">
-                                Rp500.000
-                            </div>
-                            <div class="mt-2 text-sm text-white/70">
-                                bonus pasangan
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <section id="reward" class="scroll-mt-24 bg-[#0b2f1f] py-20 lg:py-28">
-            <div class="mx-auto max-w-7xl px-5 lg:px-8">
-
-                <div class="mx-auto max-w-3xl text-center">
-                    <span class="text-sm font-bold uppercase tracking-[0.25em] text-gold-400">
-                        Reward
-                    </span>
-
-                    <h2 class="mt-3 text-3xl font-black text-white sm:text-4xl">
-                        Raih Target, Dapatkan Reward
-                    </h2>
-
-                    <p class="mt-5 leading-8 text-emerald-100/70">
-                        Perkembangan jaringan hingga level tertentu memberikan
-                        kesempatan memperoleh reward menarik.
-                    </p>
-                </div>
-
-                <div class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-
-                    <div class="rounded-3xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur">
-                        <div class="text-4xl font-black text-gold-400">5</div>
-                        <div class="mt-2 text-sm font-bold text-white">AGANDA</div>
-                        <div class="mt-4 text-sm text-emerald-100/60">Handphone</div>
-                    </div>
-
-                    <div class="rounded-3xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur">
-                        <div class="text-4xl font-black text-gold-400">10</div>
-                        <div class="mt-2 text-sm font-bold text-white">AGANDA</div>
-                        <div class="mt-4 text-sm text-emerald-100/60">Emas 5 Gram</div>
-                    </div>
-
-                    <div class="rounded-3xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur">
-                        <div class="text-4xl font-black text-gold-400">20</div>
-                        <div class="mt-2 text-sm font-bold text-white">AGANDA</div>
-                        <div class="mt-4 text-sm text-emerald-100/60">Motor</div>
-                    </div>
-
-                    <div class="rounded-3xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur">
-                        <div class="text-4xl font-black text-gold-400">50</div>
-                        <div class="mt-2 text-sm font-bold text-white">AGANDA</div>
-                        <div class="mt-4 text-sm text-emerald-100/60">Umroh Gratis</div>
-                    </div>
-
-                    <div class="rounded-3xl border border-gold-400/30 bg-gold-400/10 p-6 text-center backdrop-blur">
-                        <div class="text-4xl font-black text-gold-400">100</div>
-                        <div class="mt-2 text-sm font-bold text-white">AGANDA</div>
-                        <div class="mt-4 text-sm text-emerald-100/70">
-                            Umroh + Wisata Turki
-                        </div>
-                    </div>
-
-                </div>
-
-                <div
-                    class="mx-auto mt-10 max-w-3xl rounded-2xl border border-gold-400/20 bg-gold-400/10 px-6 py-5 text-center text-sm leading-6 text-emerald-100/80">
-                    Reward diberikan berdasarkan pencapaian dan ketentuan program AGANDA yang berlaku.
-                </div>
-
-            </div>
-        </section>
-
-        <section id="cara-bergabung" class="scroll-mt-24 bg-[#f8f7f1] py-20 lg:py-28">
-            <div class="mx-auto max-w-7xl px-5 lg:px-8">
-
-                <div class="mx-auto max-w-3xl text-center">
-                    <span class="text-sm font-bold uppercase tracking-[0.25em] text-emerald-600">
-                        Cara Bergabung
-                    </span>
-
-                    <h2 class="mt-3 text-3xl font-black text-[#0b2f1f] sm:text-4xl">
-                        Mulai Perjalanan Bersama AGANDA
-                    </h2>
-                </div>
-
-                <div class="relative mt-14 grid gap-8 md:grid-cols-4">
-
-                    <div class="relative rounded-3xl bg-white p-7 text-center shadow-sm">
-                        <div
-                            class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#0b2f1f] text-xl font-black text-gold-400">
-                            1
-                        </div>
-                        <h3 class="mt-5 font-bold text-[#0b2f1f]">
-                            Daftar
-                        </h3>
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Daftarkan diri sebagai anggota AGANDA.
-                        </p>
-                    </div>
-
-                    <div class="relative rounded-3xl bg-white p-7 text-center shadow-sm">
-                        <div
-                            class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gold-500 text-xl font-black text-white">
-                            2
-                        </div>
-                        <h3 class="mt-5 font-bold text-[#0b2f1f]">
-                            Menjadi Agen
-                        </h3>
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Lengkapi proses dan status keagenan sesuai program.
-                        </p>
-                    </div>
-
-                    <div class="relative rounded-3xl bg-white p-7 text-center shadow-sm">
-                        <div
-                            class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#0b2f1f] text-xl font-black text-gold-400">
-                            3
-                        </div>
-                        <h3 class="mt-5 font-bold text-[#0b2f1f]">
-                            Bangun Jaringan
-                        </h3>
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Sponsor anggota baru dan kembangkan jaringan AGANDA.
-                        </p>
-                    </div>
-
-                    <div class="relative rounded-3xl bg-white p-7 text-center shadow-sm">
-                        <div
-                            class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gold-500 text-xl font-black text-white">
-                            4
-                        </div>
-                        <h3 class="mt-5 font-bold text-[#0b2f1f]">
-                            Raih Bonus
-                        </h3>
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Nikmati bonus dan kejar target reward sesuai pencapaian.
-                        </p>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
+        @include('homepage.tentang')
+        @include('homepage.sistem')
+        @include('homepage.bonus')
+        @include('homepage.reward')
+        @include('homepage.cara-bergabung')
+        @include('homepage.brosur')
         <section class="bg-white py-20 lg:py-28">
             <div class="mx-auto max-w-7xl px-5 lg:px-8">
 
@@ -766,6 +457,12 @@
                         <a href="#reward" class="block transition hover:text-white">
                             Reward
                         </a>
+                        <a href="#cara-bergabung" class="block transition hover:text-white">
+                            Cara Bergabung
+                        </a>
+                        <a href="#brosur" class="block transition hover:text-white">
+                            Brosur
+                        </a>
                     </div>
                 </div>
 
@@ -817,6 +514,69 @@
             brosurIndex = (brosurIndex + 1) % brosurSlides.length;
             showBrosur(brosurIndex);
         }, 5000);
+
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuBars = mobileMenuButton.querySelectorAll('.mobile-menu-bar');
+
+        const setMobileMenuState = (isOpen) => {
+            mobileMenu.classList.toggle('hidden', !isOpen);
+            mobileMenuButton.setAttribute('aria-expanded', String(isOpen));
+            mobileMenuButton.setAttribute('aria-label', isOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi');
+            mobileMenuBars[0].classList.toggle('translate-y-2', isOpen);
+            mobileMenuBars[0].classList.toggle('rotate-45', isOpen);
+            mobileMenuBars[1].classList.toggle('opacity-0', isOpen);
+            mobileMenuBars[2].classList.toggle('-translate-y-2', isOpen);
+            mobileMenuBars[2].classList.toggle('-rotate-45', isOpen);
+        };
+
+        mobileMenuButton.addEventListener('click', () => {
+            setMobileMenuState(mobileMenu.classList.contains('hidden'));
+        });
+
+        const navigationLinks = document.querySelectorAll('[data-nav-link]');
+        const navigationSections = [...navigationLinks]
+            .map((link) => document.querySelector(link.getAttribute('href')))
+            .filter(Boolean);
+
+        navigationSections.forEach((section) => {
+            section.classList.add('homepage-section-reveal');
+        });
+
+        const setActiveNavigation = (activeId) => {
+            navigationLinks.forEach((link) => {
+                link.classList.toggle('is-active', link.getAttribute('href') === `#${activeId}`);
+            });
+        };
+
+        navigationLinks.forEach((link) => {
+            link.addEventListener('click', (event) => {
+                const target = document.querySelector(link.getAttribute('href'));
+
+                if (!target) {
+                    return;
+                }
+
+                event.preventDefault();
+                setActiveNavigation(target.id);
+                setMobileMenuState(false);
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    setActiveNavigation(entry.target.id);
+                }
+            });
+        }, {
+            rootMargin: '-25% 0px -55% 0px',
+            threshold: 0
+        });
+
+        navigationSections.forEach((section) => sectionObserver.observe(section));
     </script>
 </body>
 
