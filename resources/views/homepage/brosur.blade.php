@@ -1,9 +1,3 @@
-@php
-    $brochureImages = collect(range(1, 5))
-        ->map(fn (int $number): string => asset("images/slider/brosur{$number}.jpeg"))
-        ->values();
-@endphp
-
 <section id="brosur" class="scroll-mt-24 bg-[#f8f7f1] py-20 lg:py-28">
     <style>
         .brochure-carousel {
@@ -31,15 +25,22 @@
             </p>
         </div>
 
-        <p class="mt-8 text-center text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 sm:hidden">
+        <p class="mt-8 text-center text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
             Geser ke kanan atau kiri untuk melihat brosur
         </p>
 
-        <div class="brochure-carousel mt-6 flex snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain pb-4 sm:mt-10 sm:grid sm:grid-cols-2 sm:gap-7 sm:overflow-visible sm:pb-0 lg:grid-cols-3">
+        <div class="mt-6 flex items-center gap-3 sm:mt-10">
+            <button id="brochure-previous" type="button" aria-label="Geser brosur ke kiri"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0b2f1f] text-xl text-gold-400 shadow-sm transition hover:bg-emerald-700">
+                &larr;
+            </button>
+
+            <div id="brochure-carousel"
+                class="brochure-carousel flex min-w-0 snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain pb-4">
             @foreach ($brochureImages as $index => $image)
                 @php($number = $index + 1)
 
-                <button type="button" class="brochure-card group min-w-[84%] snap-center text-left sm:min-w-0"
+                <button type="button" class="brochure-card group min-w-[84%] snap-center text-left sm:min-w-[320px] lg:min-w-[360px]"
                     data-brochure-index="{{ $index }}"
                     aria-label="Lihat brosur {{ $number }}">
                     <div
@@ -62,6 +63,12 @@
                     </div>
                 </button>
             @endforeach
+            </div>
+
+            <button id="brochure-next" type="button" aria-label="Geser brosur ke kanan"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0b2f1f] text-xl text-gold-400 shadow-sm transition hover:bg-emerald-700">
+                &rarr;
+            </button>
         </div>
     </div>
 </section>
@@ -92,6 +99,7 @@
     const brochureImages = @json($brochureImages);
     const brochureModal = document.getElementById('brochure-modal');
     const modalImage = document.getElementById('modal-image');
+    const brochureCarousel = document.getElementById('brochure-carousel');
     let currentBrochure = 0;
 
     function showBrochure(index) {
@@ -114,6 +122,12 @@
     document.getElementById('close-modal').addEventListener('click', closeBrochure);
     document.getElementById('previous-brochure').addEventListener('click', () => showBrochure(currentBrochure - 1));
     document.getElementById('next-brochure').addEventListener('click', () => showBrochure(currentBrochure + 1));
+    document.getElementById('brochure-previous').addEventListener('click', () => {
+        brochureCarousel.scrollBy({ left: -brochureCarousel.clientWidth * 0.85, behavior: 'smooth' });
+    });
+    document.getElementById('brochure-next').addEventListener('click', () => {
+        brochureCarousel.scrollBy({ left: brochureCarousel.clientWidth * 0.85, behavior: 'smooth' });
+    });
 
     brochureModal.addEventListener('click', (event) => {
         if (event.target === brochureModal) {

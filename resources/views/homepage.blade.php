@@ -109,6 +109,12 @@
 </head>
 
 <body class="bg-[#faf8f1] text-slate-800 antialiased">
+    @php
+        $brochureImages = collect(glob(public_path('images/slider/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}'), GLOB_BRACE) ?: [])
+            ->sort(fn (string $left, string $right): int => strnatcasecmp(basename($left), basename($right)))
+            ->map(fn (string $path): string => asset('images/slider/' . basename($path)))
+            ->values();
+    @endphp
 
     <nav class="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#0b2f1f]/95 shadow-lg backdrop-blur">
         <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
@@ -277,42 +283,18 @@
 
                         <div class="relative aspect-[2/3] overflow-hidden rounded-[1.5rem] bg-white">
 
-                            <div class="brosur-slide absolute inset-0 opacity-100 transition-opacity duration-1000">
-                                <img src="{{ asset('images/slider/brosur1.jpeg') }}" alt="Brosur AGANDA 1"
-                                    class="h-full w-full object-cover">
-                            </div>
-
-                            <div class="brosur-slide absolute inset-0 opacity-0 transition-opacity duration-1000">
-                                <img src="{{ asset('images/slider/brosur2.jpeg') }}" alt="Brosur AGANDA 2"
-                                    class="h-full w-full object-cover">
-                            </div>
-
-                            <div class="brosur-slide absolute inset-0 opacity-0 transition-opacity duration-1000">
-                                <img src="{{ asset('images/slider/brosur3.jpeg') }}" alt="Brosur AGANDA 3"
-                                    class="h-full w-full object-cover">
-                            </div>
-
-                            <div class="brosur-slide absolute inset-0 opacity-0 transition-opacity duration-1000">
-                                <img src="{{ asset('images/slider/brosur4.jpeg') }}" alt="Brosur AGANDA 4"
-                                    class="h-full w-full object-cover">
-                            </div>
-
-                            <div class="brosur-slide absolute inset-0 opacity-0 transition-opacity duration-1000">
-                                <img src="{{ asset('images/slider/brosur5.jpeg') }}" alt="Brosur AGANDA 5"
-                                    class="h-full w-full object-cover">
-                            </div>
+                            @foreach ($brochureImages as $index => $image)
+                                <div class="brosur-slide absolute inset-0 {{ $index === 0 ? 'opacity-100' : 'opacity-0' }} transition-opacity duration-1000">
+                                    <img src="{{ $image }}" alt="Brosur AGANDA {{ $index + 1 }}"
+                                        class="h-full w-full object-cover">
+                                </div>
+                            @endforeach
 
                             <div class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-                                <span
-                                    class="brosur-dot h-2 w-6 rounded-full bg-gold-400 transition-all duration-500"></span>
-                                <span
-                                    class="brosur-dot h-2 w-2 rounded-full bg-white/70 transition-all duration-500"></span>
-                                <span
-                                    class="brosur-dot h-2 w-2 rounded-full bg-white/70 transition-all duration-500"></span>
-                                <span
-                                    class="brosur-dot h-2 w-2 rounded-full bg-white/70 transition-all duration-500"></span>
-                                <span
-                                    class="brosur-dot h-2 w-2 rounded-full bg-white/70 transition-all duration-500"></span>
+                                @foreach ($brochureImages as $index => $image)
+                                    <span
+                                        class="brosur-dot h-2 {{ $index === 0 ? 'w-6 bg-gold-400' : 'w-2 bg-white/70' }} rounded-full transition-all duration-500"></span>
+                                @endforeach
                             </div>
 
                         </div>
