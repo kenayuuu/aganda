@@ -1105,6 +1105,7 @@ class AgandaGroupController extends Controller
             $rightMemberId
         ) {
             $pair = AgandaPair::create([
+                'user_id' => $user->id,
                 'group_id' => $group->id,
                 'left_member_id' => $leftMemberId,
                 'right_member_id' => $rightMemberId,

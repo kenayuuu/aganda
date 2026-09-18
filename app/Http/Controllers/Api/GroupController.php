@@ -126,7 +126,7 @@ class GroupController extends Controller
         $group->load([
             'owner',
             'packageKegiatan',
-            'members.calon',
+            'members.calon.user',
             'members.registeredBy',
         ]);
 
@@ -136,6 +136,11 @@ class GroupController extends Controller
                 ->where('status', 'active')
                 ->values()
                 ->map(function ($member) {
+                    $memberUser = \App\Models\User::where(
+                        'calon_id',
+                        $member->calon_id
+                    )->first();
+
                     return [
                         'id' => $member->id,
                         'calon_id' => $member->calon_id,
@@ -145,12 +150,14 @@ class GroupController extends Controller
                             'id' => $member->registeredBy->id,
                             'name' => $member->registeredBy->name,
                             'member_id' => $member->registeredBy->member_id,
+                            'avatar' => $member->registeredBy->avatar,
                         ] : null,
                         'calon' => $member->calon ? [
                             'id' => $member->calon->id,
                             'nama_lengkap' => $member->calon->nama_lengkap,
                             'email' => $member->calon->email,
                             'no_telepon' => $member->calon->no_telepon,
+                            'avatar' => $member->calon->user?->avatar,
                         ] : null,
                     ];
                 }),
@@ -209,6 +216,7 @@ class GroupController extends Controller
                 'name' => $group->owner->name,
                 'member_id' => $group->owner->member_id,
                 'role' => $group->owner->role,
+                'avatar' => $group->owner->avatar,
             ] : null,
             'package' => $group->packageKegiatan ? [
                 'id' => $group->packageKegiatan->id,

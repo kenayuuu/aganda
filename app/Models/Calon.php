@@ -23,4 +23,13 @@ class Calon extends Model
             'calon_id'
         );
     }
+
+    public function user()
+    {
+        return $this->hasOne(
+            User::class,
+            'calon_id',
+            'id'
+        );
+    }
 }

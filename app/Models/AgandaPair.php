@@ -12,6 +12,7 @@ class AgandaPair extends Model
     protected $table = 'aganda_pairs';
 
     protected $fillable = [
+        'user_id',
         'group_id',
         'left_member_id',
         'right_member_id',

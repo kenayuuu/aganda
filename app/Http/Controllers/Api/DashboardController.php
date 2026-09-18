@@ -164,12 +164,18 @@ class DashboardController extends Controller
             ->latest('id')
             ->get();
 
-        $commission = (float) AgandaCommission::where('user_id', $user->id)
-            ->where('status', '!=', 'cancelled')
+        $commission = (float) BonusTransaction::where('user_id', $user->id)
+            ->where('type', 'line_1')
+            ->where('status', 'confirmed')
             ->sum('amount');
 
-        $reward = (float) AgandaReward::where('user_id', $user->id)
-            ->where('status', '!=', 'cancelled')
+        $reward = (float) BonusTransaction::where('user_id', $user->id)
+            ->where('type', 'line_2_pairing')
+            ->where('status', 'confirmed')
+            ->sum('amount');
+
+        $totalBonus = (float) BonusTransaction::where('user_id', $user->id)
+            ->where('status', 'confirmed')
             ->sum('amount');
 
         return response()->json([
@@ -179,7 +185,7 @@ class DashboardController extends Controller
                 'total_member' => $groups->sum('active_members_count'),
                 'total_commission' => $commission,
                 'total_reward' => $reward,
-                'total_bonus' => $commission + $reward,
+                'total_bonus' => $totalBonus,
             ],
             'groups' => $groups->map(function ($group) {
                 return [
@@ -233,7 +239,7 @@ class DashboardController extends Controller
             ->count();
 
         $groups = AgandaGroup::whereHas('members', function ($query) use ($user) {
-            $query->where('user_id', $user->id)
+            $query->where('calon_id', $user->calon_id)
                 ->where('status', 'active');
         })
             ->with('packageKegiatan')

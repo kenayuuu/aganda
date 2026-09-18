@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\StructureController;
 use App\Http\Controllers\Api\WithdrawalController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AdminBonusController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
@@ -48,4 +49,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/admin/withdrawals/{withdrawal}/approve', [AdminWithdrawalController::class, 'approve']);
     Route::put('/admin/withdrawals/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject']);
     Route::put('/admin/withdrawals/{withdrawal}/paid', [AdminWithdrawalController::class, 'paid']);
+    Route::get('/admin/bonus', [AdminBonusController::class, 'index']);
 });
