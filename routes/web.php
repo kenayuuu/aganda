@@ -14,6 +14,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Karyawan\KaryawanDashboardController;
 use App\Http\Controllers\MemberFinanceController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\BonusWithdrawalController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -61,6 +62,23 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/calons', [CalonController::class, 'store'])
             ->name('calons.store');
 
+Route::get('/bonus/withdrawals', [BonusWithdrawalController::class, 'index'])
+    ->name('bonus.withdrawals.index');
+
+Route::get('/bonus/withdrawals/{withdrawal}', [BonusWithdrawalController::class, 'show'])
+    ->name('bonus.withdrawals.show');
+
+Route::post('/bonus/withdrawals/{withdrawal}/approve', [BonusWithdrawalController::class, 'approve'])
+    ->name('bonus.withdrawals.approve');
+
+Route::post('/bonus/withdrawals/{withdrawal}/paid', [BonusWithdrawalController::class, 'paid'])
+    ->name('bonus.withdrawals.paid');
+
+Route::post('/bonus/withdrawals/{withdrawal}/reject', [BonusWithdrawalController::class, 'reject'])
+    ->name('bonus.withdrawals.reject');
+
+            });
+
         Route::prefix('rewards')
             ->name('rewards.')
             ->controller(RewardController::class)
@@ -89,7 +107,6 @@ Route::middleware(['auth', 'role:admin'])
 
                 Route::post('/users/{user}/allocate-bonus', [CalonPaymentController::class, 'allocateBonus'])
                     ->name('users.allocate-bonus');
-            });
     });
 
 Route::middleware(['auth', 'role:karyawan'])

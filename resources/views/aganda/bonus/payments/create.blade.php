@@ -4,7 +4,7 @@
     <div class="mx-auto max-w-4xl space-y-6">
 
         <div>
-            <a href="{{ route('admin.bonus.payments.index') }}"
+            <a href="{{ route('bonus.payments.index') }}"
                 class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-red-600">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6" />
@@ -164,7 +164,7 @@
             </div>
 
             <div class="flex justify-end gap-3">
-                <a href="{{ route('admin.bonus.payments.index') }}"
+                <a href="{{ route('bonus.payments.index') }}"
                     class="rounded-xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
                     Batal
                 </a>

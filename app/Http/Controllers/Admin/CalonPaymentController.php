@@ -205,7 +205,7 @@ class CalonPaymentController extends Controller
         });
 
         return redirect()
-            ->route('admin.bonus.payments.index')
+            ->route('bonus.payments.index')
             ->with(
                 'success',
                 'Pembayaran berhasil dicatat dan komisi Line 1 berhasil dibuat.'

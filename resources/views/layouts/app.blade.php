@@ -200,6 +200,22 @@
                             Keuangan
                         </p>
 
+                        {{-- Pembayaran --}}
+                        <a href="{{ match (auth()->user()->role) {
+                            'member' => route('member.finance.payments'),
+                            'karyawan' => route('karyawan.payments.index'),
+                            default => route('bonus.payments.index'),
+                        } }}"
+                            class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
+                            {{ request()->routeIs('bonus.payments.*', 'karyawan.payments.*', 'member.finance.payments')
+                                ? 'bg-red-50 text-red-600'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 7h18M5 11h14M7 15h10M9 19h6" />
+                            </svg>
+                            <span>Pembayaran</span>
+                        </a>
 
                         {{-- Bonus --}}
 
@@ -207,12 +223,12 @@
                             <a href="{{ match (auth()->user()->role) {
                                 'member' => route('member.finance.bonus'),
                                 'karyawan' => route('karyawan.bonus.index'),
-                                default => route('admin.bonus.index'),
+                                default => route('bonus.index'),
                             } }}"
                                 class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-        {{ request()->routeIs('admin.bonus.index', 'karyawan.bonus.*', 'member.finance.bonus')
-            ? 'bg-red-50 text-red-600'
-            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+                            {{ request()->routeIs('bonus.index', 'karyawan.bonus.*', 'member.finance.bonus')
+                                ? 'bg-red-50 text-red-600'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
 
                                 <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
@@ -225,27 +241,9 @@
 
                         </div>
 
-                        {{-- Pembayaran --}}
-                        <a href="{{ match (auth()->user()->role) {
-                            'member' => route('member.finance.payments'),
-                            'karyawan' => route('karyawan.payments.index'),
-                            default => route('admin.bonus.payments.index'),
-                        } }}"
-                            class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-                            {{ request()->routeIs('admin.bonus.payments.*', 'karyawan.payments.*', 'member.finance.payments')
-                                ? 'bg-red-50 text-red-600'
-                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
-                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                                    d="M3 7h18M5 11h14M7 15h10M9 19h6" />
-                            </svg>
-                            <span>Pembayaran</span>
-                        </a>
-
-
                         {{-- Reward --}}
 
-                        <a href="{{ auth()->user()->role === 'admin' ? route('admin.rewards.index') : route('aganda.rewards.index') }}"
+                        <a href="{{ auth()->user()->role === 'admin' ? route('rewards.index') : route('aganda.rewards.index') }}"
                             class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
                             {{ request()->routeIs('aganda.rewards.*', 'admin.rewards.*')
                                 ? 'bg-red-50 text-red-600'
@@ -262,9 +260,26 @@
 
                         </a>
 
+                        {{-- Withdraw --}}
+
+                        <a href="{{ route('admin.bonus.withdrawals.index') }}"
+                            class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
+                            {{ request()->routeIs('admin.bonus.withdrawals.*')
+                                ? 'bg-red-50 text-red-600'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M17 9V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2m-6-3h8m0 0-3-3m3 3-3 3" />
+                            </svg>
+
+                            <span>
+                                Withdraw
+                            </span>
+
+                        </a>
 
                     </div>
-
 
                     {{-- =================================================
                     SYSTEM

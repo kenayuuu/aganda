@@ -8,8 +8,6 @@ use App\Models\BonusTransaction;
 use App\Models\CalonPayment;
 use App\Services\BonusService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Models\BonusWithdrawal;
 
 class BonusController extends Controller
 {
@@ -43,7 +41,11 @@ class BonusController extends Controller
             ->latest()
             ->get();
 
-        $totalBonus = (float) $transactions->sum('amount');
+        $totalBonus = $this->bonusService->getGrossBonus($user);
+
+        $totalAllocated = $this->bonusService->getTotalAllocated($user);
+
+        $availableBonus = $this->bonusService->getAvailableBonus($user);
 
         $line1Bonus = (float) $transactions
             ->where('type', 'line_1')
@@ -57,53 +59,26 @@ class BonusController extends Controller
             ->where('type', 'adjustment')
             ->sum('amount');
 
-        $totalAllocated = (float) $allocations->sum('amount');
+        $packagePayment = $this->bonusService
+            ->getPackagePayment($user);
 
-        $packagePayment = (float) $allocations
-            ->where('allocation_type', 'package_payment')
-            ->sum('amount');
+        $withdrawalAllocation = $this->bonusService
+            ->getTotalCashWithdrawal($user);
 
-        $withdrawalAllocation = (float) $allocations
-            ->where('allocation_type', 'withdrawal')
-            ->sum('amount');
+        $packagePrice = $this->bonusService
+            ->getPackagePrice($user);
 
-        $availableBonus = max(
-            0,
-            $totalBonus - $totalAllocated
-        );
+        $deposit = $this->bonusService
+            ->getDeposit($user);
 
-        $packagePrice = 0;
-        $deposit = 0;
-        $paidDp = 0;
-        $paidPackage = 0;
-        $remainingPackage = 0;
-        $package = null;
+        $totalPaid = $this->bonusService
+            ->getTotalPaid($user);
 
-        if ($user->calon_id) {
-            $calon = $user->calon()
-                ->with('packageKegiatan')
-                ->first();
+        $remainingPackage = $this->bonusService
+            ->getRemainingPackage($user);
 
-            if ($calon && $calon->packageKegiatan) {
-                $package = $calon->packageKegiatan;
-
-                $packagePrice = (float) $package->harga;
-                $deposit = (float) $package->deposit;
-
-                $paidDp = (float) CalonPayment::query()
-                    ->where('calon_id', $user->calon_id)
-                    ->where('payment_type', 'dp')
-                    ->where('status', 'paid')
-                    ->sum('amount');
-
-                $paidPackage = $paidDp + $packagePayment;
-
-                $remainingPackage = max(
-                    0,
-                    $packagePrice - $paidPackage
-                );
-            }
-        }
+        $isPackagePaidOff = $this->bonusService
+            ->isPackagePaidOff($user);
 
         $line1Count = $transactions
             ->where('type', 'line_1')
@@ -149,6 +124,42 @@ class BonusController extends Controller
             })
             ->values();
 
+        $package = null;
+
+        if ($user->calon_id) {
+            $calon = $user->calon()
+                ->with('packageKegiatan')
+                ->first();
+
+            if ($calon && $calon->packageKegiatan) {
+                $packageModel = $calon->packageKegiatan;
+
+                $package = [
+                    'id' => $packageModel->id,
+                    'name' => $packageModel->nama_paket
+                        ?? $packageModel->name
+                        ?? null,
+                    'package_id' => $packageModel->id,
+                    'package_name' => $packageModel->nama_paket
+                        ?? $packageModel->name
+                        ?? null,
+                    'package_price' => $packagePrice,
+                    'harga' => $packagePrice,
+                    'deposit' => $deposit,
+                    'paid_dp' => max(
+                        0,
+                        $totalPaid - $packagePayment
+                    ),
+                    'paid_package' => $totalPaid + $packagePayment,
+                    'remaining_package' => $remainingPackage,
+                    'remaining' => $remainingPackage,
+                    'is_paid_off' => $isPackagePaidOff,
+                    'tanggal_berlangsung' =>
+                        $packageModel->tanggal_berlangsung,
+                ];
+            }
+        }
+
         return response()->json([
             'user' => [
                 'id' => $user->id,
@@ -168,18 +179,7 @@ class BonusController extends Controller
                 'line_1_count' => $line1Count,
                 'line_2_count' => $line2Count,
             ],
-            'package' => $package ? [
-                'id' => $package->id,
-                'name' => $package->nama_paket
-                    ?? $package->name
-                    ?? null,
-                'harga' => $packagePrice,
-                'deposit' => $deposit,
-                'paid_dp' => $paidDp,
-                'paid_package' => $paidPackage,
-                'remaining' => $remainingPackage,
-                'tanggal_berlangsung' => $package->tanggal_berlangsung,
-            ] : null,
+            'package' => $package,
             'bonus_history' => $bonusHistory,
             'allocation_history' => $allocationHistory,
         ]);
@@ -205,25 +205,27 @@ class BonusController extends Controller
             ->get();
 
         return response()->json([
-            'history' => $transactions->map(function ($transaction) {
-                return [
-                    'id' => $transaction->id,
-                    'type' => $transaction->type,
-                    'amount' => (float) $transaction->amount,
-                    'status' => $transaction->status,
-                    'description' => $transaction->description,
-                    'group' => $transaction->group ? [
-                        'id' => $transaction->group->id,
-                        'kode_group' => $transaction->group->kode_group,
-                    ] : null,
-                    'source_user' => $transaction->sourceUser ? [
-                        'id' => $transaction->sourceUser->id,
-                        'name' => $transaction->sourceUser->name,
-                        'member_id' => $transaction->sourceUser->member_id,
-                    ] : null,
-                    'created_at' => $transaction->created_at,
-                ];
-            })->values(),
+            'history' => $transactions
+                ->map(function ($transaction) {
+                    return [
+                        'id' => $transaction->id,
+                        'type' => $transaction->type,
+                        'amount' => (float) $transaction->amount,
+                        'status' => $transaction->status,
+                        'description' => $transaction->description,
+                        'group' => $transaction->group ? [
+                            'id' => $transaction->group->id,
+                            'kode_group' => $transaction->group->kode_group,
+                        ] : null,
+                        'source_user' => $transaction->sourceUser ? [
+                            'id' => $transaction->sourceUser->id,
+                            'name' => $transaction->sourceUser->name,
+                            'member_id' => $transaction->sourceUser->member_id,
+                        ] : null,
+                        'created_at' => $transaction->created_at,
+                    ];
+                })
+                ->values(),
         ]);
     }
 
@@ -243,8 +245,11 @@ class BonusController extends Controller
             ], 422);
         }
 
-        $availableBonus = $this->bonusService->getAvailableBonus($user);
-        $remainingPackage = $this->bonusService->getRemainingPackage($user);
+        $availableBonus = $this->bonusService
+            ->getAvailableBonus($user);
+
+        $remainingPackage = $this->bonusService
+            ->getRemainingPackage($user);
 
         if ($availableBonus <= 0) {
             return response()->json([
@@ -260,12 +265,8 @@ class BonusController extends Controller
             ], 422);
         }
 
-        $amount = min(
-            $availableBonus,
-            $remainingPackage
-        );
-
-        $allocation = $this->bonusService->allocateBonusToPackage($user);
+        $allocation = $this->bonusService
+            ->allocateBonusToPackage($user);
 
         if (!$allocation) {
             return response()->json([
@@ -273,9 +274,14 @@ class BonusController extends Controller
             ], 422);
         }
 
-        $totalPackagePayment = $this->bonusService->getPackagePayment($user);
-        $newAvailableBonus = $this->bonusService->getAvailableBonus($user);
-        $newRemainingPackage = $this->bonusService->getRemainingPackage($user);
+        $totalPackagePayment = $this->bonusService
+            ->getPackagePayment($user);
+
+        $newAvailableBonus = $this->bonusService
+            ->getAvailableBonus($user);
+
+        $newRemainingPackage = $this->bonusService
+            ->getRemainingPackage($user);
 
         return response()->json([
             'message' => 'Bonus berhasil dialokasikan untuk pembayaran paket.',
@@ -283,85 +289,16 @@ class BonusController extends Controller
                 'id' => $allocation->id,
                 'bonus_transaction_id' => $allocation->bonus_transaction_id,
                 'allocation_type' => $allocation->allocation_type,
-                'amount' => (float) $amount,
+                'amount' => (float) $allocation->amount,
                 'reference_id' => $allocation->reference_id,
                 'notes' => $allocation->notes,
             ],
             'summary' => [
-                'allocated_amount' => (float) $amount,
+                'allocated_amount' => (float) $allocation->amount,
                 'available_bonus' => $newAvailableBonus,
                 'package_payment' => $totalPackagePayment,
                 'remaining_package' => $newRemainingPackage,
             ],
         ]);
-    }
-
-    public function createWithdrawal(User $user, float $amount): BonusWithdrawal
-    {
-        return DB::transaction(function () use ($user, $amount) {
-            $available = $this->getAvailableBonus($user);
-
-            if ($amount <= 0) {
-                throw new \InvalidArgumentException(
-                    'Nominal pencairan harus lebih dari 0.'
-                );
-            }
-
-            if ($amount > $available) {
-                throw new \InvalidArgumentException(
-                    'Nominal pencairan melebihi bonus yang tersedia.'
-                );
-            }
-
-            $withdrawal = BonusWithdrawal::create([
-                'user_id' => $user->id,
-                'amount' => $amount,
-                'status' => 'pending',
-                'requested_at' => now(),
-            ]);
-
-            $transactions = BonusTransaction::where('user_id', $user->id)
-                ->where('status', 'confirmed')
-                ->orderBy('id')
-                ->get();
-
-            $remainingAllocation = $amount;
-
-            foreach ($transactions as $bonus) {
-                $alreadyAllocated = (float) $bonus->allocations()
-                    ->sum('amount');
-
-                $availableFromTransaction = max(
-                    0,
-                    (float) $bonus->amount - $alreadyAllocated
-                );
-
-                if ($availableFromTransaction <= 0) {
-                    continue;
-                }
-
-                $allocationAmount = min(
-                    $availableFromTransaction,
-                    $remainingAllocation
-                );
-
-                BonusAllocation::create([
-                    'user_id' => $user->id,
-                    'bonus_transaction_id' => $bonus->id,
-                    'allocation_type' => 'withdrawal',
-                    'amount' => $allocationAmount,
-                    'reference_id' => $withdrawal->id,
-                    'notes' => 'Bonus digunakan untuk pengajuan pencairan.',
-                ]);
-
-                $remainingAllocation -= $allocationAmount;
-
-                if ($remainingAllocation <= 0) {
-                    break;
-                }
-            }
-
-            return $withdrawal;
-        });
     }
 }
