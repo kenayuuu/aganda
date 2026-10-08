@@ -2,21 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgandaCommission;
 use App\Models\AgandaGroup;
 use App\Models\AgandaGroupMember;
 use App\Models\AgandaPair;
 use App\Models\AgandaReward;
-use App\Models\AgandaCommission;
 use App\Models\BonusTransaction;
-use App\Models\PackageKegiatan;
 use App\Models\Calon;
 use App\Models\CalonPayment;
+use App\Models\PackageKegiatan;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Str;
 
 class AgandaGroupController extends Controller
 {
@@ -96,7 +95,7 @@ class AgandaGroupController extends Controller
         );
 
         do {
-            $kodeGroup = 'AGR-' . strtoupper(Str::random(8));
+            $kodeGroup = 'AGR-'.strtoupper(Str::random(8));
         } while (
             AgandaGroup::where('kode_group', $kodeGroup)->exists()
         );
@@ -123,11 +122,17 @@ class AgandaGroupController extends Controller
         $group->load([
             'owner',
             'packageKegiatan',
-            'members.calon',
+            'members.calon.user',
             'members.registeredBy',
         ]);
 
-        return view('aganda.groups.show', compact('group'));
+        $downlineCounts = $group->members()
+            ->where('status', 'active')
+            ->selectRaw('registered_by, COUNT(*) as total')
+            ->groupBy('registered_by')
+            ->pluck('total', 'registered_by');
+
+        return view('aganda.groups.show', compact('group', 'downlineCounts'));
     }
 
     public function destroy(AgandaGroup $group)
@@ -144,30 +149,113 @@ class AgandaGroupController extends Controller
             ->with('success', 'Group berhasil dihapus.');
     }
 
+    public function cancelMember(AgandaGroup $group, AgandaGroupMember $member)
+    {
+        $this->ensureGroupAccess($group);
+
+        abort_unless((int) $member->group_id === (int) $group->id, 404);
+
+        $user = auth()->user();
+
+        abort_unless(
+            $user->role === 'admin'
+                || (int) $member->registered_by === (int) $user->id,
+            403
+        );
+
+        if ($group->status !== 'active') {
+            return back()->with('error', 'Downline hanya dapat dibatalkan dari group yang masih aktif.');
+        }
+
+        $result = DB::transaction(function () use ($group, $member): string {
+            AgandaGroup::query()
+                ->lockForUpdate()
+                ->findOrFail($group->id);
+
+            $lockedMember = AgandaGroupMember::query()
+                ->where('group_id', $group->id)
+                ->lockForUpdate()
+                ->findOrFail($member->id);
+
+            if ($lockedMember->status !== 'active') {
+                return 'already_cancelled';
+            }
+
+            $downlineUserId = User::where('calon_id', $lockedMember->calon_id)
+                ->value('id');
+
+            if ($downlineUserId && AgandaGroupMember::query()
+                ->where('group_id', $group->id)
+                ->where('registered_by', $downlineUserId)
+                ->where('status', 'active')
+                ->exists()) {
+                return 'has_active_downlines';
+            }
+
+            $lockedMember->update(['status' => 'cancelled']);
+
+            return 'cancelled';
+        });
+
+        if ($result === 'has_active_downlines') {
+            return back()->with('error', 'Downline ini masih memiliki anggota aktif. Batalkan atau pindahkan cabangnya terlebih dahulu.');
+        }
+
+        if ($result === 'already_cancelled') {
+            return back()->with('error', 'Keanggotaan downline ini sudah dibatalkan sebelumnya.');
+        }
+
+        return redirect()
+            ->route('aganda.groups.show', $group->id)
+            ->with('success', 'Keanggotaan downline berhasil dibatalkan. Akun dan riwayat transaksi tetap tersimpan.');
+    }
+
     public function createMember(AgandaGroup $group)
     {
-        // Ambil calon yang sesuai dengan paket kegiatan group
-        // dan belum menjadi anggota group ini
-        $calons = Calon::where(
-            'package_kegiatan_id',
-            $group->package_kegiatan_id
-        )
-            ->whereNotIn('id', function ($query) use ($group) {
-                $query->select('calon_id')
-                    ->from('aganda_group_members')
-                    ->where('group_id', $group->id);
-            })
-            ->orderBy('nama_lengkap')
-            ->get();
+        $sponsor = auth()->user();
+        $totalDownlines = $group->members()
+            ->where('registered_by', $sponsor->id)
+            ->where('status', 'active')
+            ->count();
+        $isAtCapacity = $totalDownlines >= AgandaGroup::MAX_DIRECT_DOWNLINES;
+
+        $calons = collect();
+
+        if (! $isAtCapacity) {
+            $calons = Calon::where(
+                'package_kegiatan_id',
+                $group->package_kegiatan_id
+            )
+                ->whereNotIn('id', function ($query) use ($group) {
+                    $query->select('calon_id')
+                        ->from('aganda_group_members')
+                        ->where('group_id', $group->id);
+                })
+                ->orderBy('nama_lengkap')
+                ->get();
+        }
 
         return view(
             'aganda.groups.members.create',
-            compact('group', 'calons')
+            compact('group', 'calons', 'totalDownlines', 'isAtCapacity')
         );
     }
 
     public function storeMember(Request $request, AgandaGroup $group)
     {
+        $sponsor = $request->user();
+
+        if ($group->members()
+            ->where('registered_by', $sponsor->id)
+            ->where('status', 'active')
+            ->count() >= AgandaGroup::MAX_DIRECT_DOWNLINES) {
+            return back()
+                ->withErrors([
+                    'calon_id' => 'Anda sudah mencapai batas maksimal 20 downline langsung (Line 1) di group ini.',
+                ])
+                ->withInput();
+        }
+
         $validated = $request->validate([
             'calon_id' => [
                 'required',
@@ -178,7 +266,7 @@ class AgandaGroupController extends Controller
         $calon = Calon::with('packageKegiatan')
             ->findOrFail($validated['calon_id']);
 
-        if (!$calon->packageKegiatan) {
+        if (! $calon->packageKegiatan) {
             return back()
                 ->withErrors([
                     'calon_id' => 'Paket kegiatan calon tidak ditemukan.',
@@ -232,9 +320,8 @@ class AgandaGroupController extends Controller
 
         $temporaryPassword = Str::random(10);
         $userBaru = null;
-        $sponsor = auth()->user();
 
-        DB::transaction(function () use (
+        $registrationSucceeded = DB::transaction(function () use (
             $calon,
             $group,
             $temporaryPassword,
@@ -243,13 +330,24 @@ class AgandaGroupController extends Controller
             $sponsor,
             &$userBaru
         ) {
+            $lockedGroup = AgandaGroup::query()
+                ->lockForUpdate()
+                ->findOrFail($group->id);
+
+            if ($lockedGroup->members()
+                ->where('registered_by', $sponsor->id)
+                ->where('status', 'active')
+                ->count() >= AgandaGroup::MAX_DIRECT_DOWNLINES) {
+                return false;
+            }
+
             $user = User::where('calon_id', $calon->id)
                 ->lockForUpdate()
                 ->first();
 
-            if (!$user) {
+            if (! $user) {
                 do {
-                    $memberId = 'AGD-' . strtoupper(Str::random(8));
+                    $memberId = 'AGD-'.strtoupper(Str::random(8));
                 } while (
                     User::where('member_id', $memberId)->exists()
                 );
@@ -301,9 +399,19 @@ class AgandaGroupController extends Controller
                 'type' => 'line_1',
                 'amount' => 3000000,
                 'status' => 'confirmed',
-                'description' => 'Komisi Line 1 dari pembayaran DP ' . $user->name,
+                'description' => 'Komisi Line 1 dari pembayaran DP '.$user->name,
             ]);
+
+            return true;
         });
+
+        if (! $registrationSucceeded) {
+            return back()
+                ->withErrors([
+                    'calon_id' => 'Anda sudah mencapai batas maksimal 20 downline langsung (Line 1) di group ini.',
+                ])
+                ->withInput();
+        }
 
         if ($userBaru) {
             return redirect()
@@ -362,7 +470,7 @@ class AgandaGroupController extends Controller
 
         $owner = $group->owner;
 
-        if (!$owner) {
+        if (! $owner) {
             abort(404, 'Owner group tidak ditemukan.');
         }
 
@@ -383,13 +491,13 @@ class AgandaGroupController extends Controller
         foreach ($groupMembers as $groupMember) {
             $memberUser = $memberUsers->get($groupMember->calon_id);
 
-            if (!$memberUser) {
+            if (! $memberUser) {
                 continue;
             }
 
             $parentId = (int) $groupMember->registered_by;
 
-            if (!isset($childrenMap[$parentId])) {
+            if (! isset($childrenMap[$parentId])) {
                 $childrenMap[$parentId] = [];
             }
 
@@ -425,7 +533,7 @@ class AgandaGroupController extends Controller
                 $line2UserIds = $line2Users
                     ->unique('id')
                     ->pluck('id')
-                    ->map(fn($id) => (int) $id);
+                    ->map(fn ($id) => (int) $id);
 
                 $visiblePairs = $pairs->filter(function ($pair) use ($line2UserIds) {
                     return $line2UserIds->contains((int) $pair->left_member_id)
@@ -462,8 +570,8 @@ class AgandaGroupController extends Controller
             &$childrenMap,
             &$pairByUserId,
             &$commissions,
-            &$rewards,
-            $group
+            &$rewards
+
         ) {
             $children = collect(
                 $childrenMap[$user->id] ?? []
@@ -547,7 +655,7 @@ class AgandaGroupController extends Controller
                 return (int) $groupMember->calon_id === (int) $currentUser->calon_id;
             });
 
-            if (!$currentGroupMember) {
+            if (! $currentGroupMember) {
                 abort(403, 'Anda bukan anggota aktif group ini.');
             }
 
@@ -555,7 +663,7 @@ class AgandaGroupController extends Controller
                 (int) $currentGroupMember->registered_by
             );
 
-            if (!$uplineUser) {
+            if (! $uplineUser) {
                 abort(404, 'Upline tidak ditemukan.');
             }
 
@@ -714,7 +822,7 @@ class AgandaGroupController extends Controller
             $group = AgandaGroup::where('owner_id', $user->id)
                 ->first();
 
-            if (!$group) {
+            if (! $group) {
                 abort(404, 'Group tidak ditemukan.');
             }
 
@@ -730,7 +838,7 @@ class AgandaGroupController extends Controller
                     ->where('status', 'active');
             })->first();
 
-            if (!$group) {
+            if (! $group) {
                 abort(404, 'Group tidak ditemukan.');
             }
 
@@ -751,7 +859,7 @@ class AgandaGroupController extends Controller
             $group = AgandaGroup::where('owner_id', $user->id)
                 ->first();
 
-            if (!$group) {
+            if (! $group) {
                 abort(404, 'Group tidak ditemukan.');
             }
 
@@ -767,7 +875,7 @@ class AgandaGroupController extends Controller
                     ->where('status', 'active');
             })->first();
 
-            if (!$group) {
+            if (! $group) {
                 abort(404, 'Group tidak ditemukan.');
             }
 
@@ -795,9 +903,9 @@ class AgandaGroupController extends Controller
         if ($user->role === 'member') {
             $allowed = $group->owner_id === $user->id
                 || $group->members()
-                ->where('calon_id', $user->calon_id)
-                ->where('status', 'active')
-                ->exists();
+                    ->where('calon_id', $user->calon_id)
+                    ->where('status', 'active')
+                    ->exists();
 
             if ($allowed) {
                 return;
@@ -850,13 +958,13 @@ class AgandaGroupController extends Controller
             foreach ($groupMembers as $groupMember) {
                 $user = $memberUsers->get($groupMember->calon_id);
 
-                if (!$user) {
+                if (! $user) {
                     continue;
                 }
 
                 $parentId = (int) $groupMember->registered_by;
 
-                if (!isset($childrenMap[$parentId])) {
+                if (! isset($childrenMap[$parentId])) {
                     $childrenMap[$parentId] = [];
                 }
 
@@ -1016,13 +1124,13 @@ class AgandaGroupController extends Controller
                 return (int) $item->calon_id === (int) $groupMember->calon_id;
             });
 
-            if (!$member) {
+            if (! $member) {
                 continue;
             }
 
             $parentId = (int) $groupMember->registered_by;
 
-            if (!isset($childrenMap[$parentId])) {
+            if (! isset($childrenMap[$parentId])) {
                 $childrenMap[$parentId] = [];
             }
 
@@ -1046,15 +1154,15 @@ class AgandaGroupController extends Controller
         $leftMember = $memberByUserId->get($leftMemberId);
         $rightMember = $memberByUserId->get($rightMemberId);
 
-        if (!$leftMember || !$rightMember) {
+        if (! $leftMember || ! $rightMember) {
             return redirect()
                 ->route('aganda.structures.index')
                 ->with('error', 'Anggota yang dipilih tidak ditemukan dalam group.');
         }
 
         if (
-            !$line2->contains('id', $leftMemberId) ||
-            !$line2->contains('id', $rightMemberId)
+            ! $line2->contains('id', $leftMemberId) ||
+            ! $line2->contains('id', $rightMemberId)
         ) {
             return redirect()
                 ->route('aganda.structures.index')
@@ -1121,8 +1229,8 @@ class AgandaGroupController extends Controller
                 'type' => 'line_2_pairing',
                 'amount' => 500000,
                 'status' => 'confirmed',
-                'description' => 'Bonus Line 2 dari pairing ' .
-                    $leftMemberId . ' dan ' . $rightMemberId,
+                'description' => 'Bonus Line 2 dari pairing '.
+                    $leftMemberId.' dan '.$rightMemberId,
             ]);
 
             AgandaReward::create([
@@ -1148,7 +1256,7 @@ class AgandaGroupController extends Controller
             'packageKegiatan',
         ]);
 
-        if (!$group->owner) {
+        if (! $group->owner) {
             abort(404, 'Owner group tidak ditemukan.');
         }
 
@@ -1176,7 +1284,7 @@ class AgandaGroupController extends Controller
 
         $selectedUser = $usersById->get($user->id);
 
-        if (!$selectedUser) {
+        if (! $selectedUser) {
             abort(404, 'Member tidak ditemukan di group ini.');
         }
 
@@ -1185,13 +1293,13 @@ class AgandaGroupController extends Controller
         foreach ($groupMembers as $groupMember) {
             $memberUser = $memberUsers->get($groupMember->calon_id);
 
-            if (!$memberUser) {
+            if (! $memberUser) {
                 continue;
             }
 
             $parentId = (int) $groupMember->registered_by;
 
-            if (!isset($childrenMap[$parentId])) {
+            if (! isset($childrenMap[$parentId])) {
                 $childrenMap[$parentId] = [];
             }
 
@@ -1310,7 +1418,7 @@ class AgandaGroupController extends Controller
         foreach ($groupMembers as $groupMember) {
             $memberUser = $memberUsers->get($groupMember->calon_id);
 
-            if (!$memberUser) {
+            if (! $memberUser) {
                 continue;
             }
 

@@ -163,9 +163,9 @@
 
                     {{-- Semua Member --}}
 
-                    <a href="{{ route('admin.members.index') }}"
+                    <a href="{{ auth()->user()->role === 'karyawan' ? route('karyawan.members.index') : route('admin.members.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-    {{ request()->routeIs('admin.members.*')
+    {{ request()->routeIs('admin.members.*', 'karyawan.members.*')
         ? 'bg-red-50 text-red-600'
         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
                         <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,6 +175,20 @@
 
                         <span>Semua Member</span>
                     </a>
+
+                    @if (auth()->user()->role === 'admin')
+                        <a href="{{ route('admin.calons.create') }}"
+                            class="mt-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
+                            {{ request()->routeIs('admin.calons.*')
+                                ? 'bg-red-50 text-red-600'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M12 5v14m7-7H5" />
+                            </svg>
+                            <span>Input Calon Jemaah</span>
+                        </a>
+                    @endif
 
                     {{-- =================================================
                     KEUANGAN
@@ -190,9 +204,13 @@
                         {{-- Bonus --}}
 
                         <div class="mb-1">
-                            <a href="{{ route('admin.bonus.index') }}"
+                            <a href="{{ match (auth()->user()->role) {
+                                'member' => route('member.finance.bonus'),
+                                'karyawan' => route('karyawan.bonus.index'),
+                                default => route('admin.bonus.index'),
+                            } }}"
                                 class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-        {{ request()->routeIs('admin.bonus.index')
+        {{ request()->routeIs('admin.bonus.index', 'karyawan.bonus.*', 'member.finance.bonus')
             ? 'bg-red-50 text-red-600'
             : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
 
@@ -205,30 +223,33 @@
                                 <span>Bonus</span>
                             </a>
 
-                            <div class="ml-8 mt-1 space-y-1">
-                                <a href="{{ route('admin.bonus.payments.index') }}"
-                                    class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition
-            {{ request()->routeIs('admin.bonus.payments.*')
-                ? 'bg-red-50 text-red-600'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
-
-                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                                            stroke-linejoin="round" d="M3 7h18M5 11h14M7 15h10M9 19h6" />
-                                    </svg>
-
-                                    <span>Pembayaran</span>
-                                </a>
-                            </div>
                         </div>
+
+                        {{-- Pembayaran --}}
+                        <a href="{{ match (auth()->user()->role) {
+                            'member' => route('member.finance.payments'),
+                            'karyawan' => route('karyawan.payments.index'),
+                            default => route('admin.bonus.payments.index'),
+                        } }}"
+                            class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
+                            {{ request()->routeIs('admin.bonus.payments.*', 'karyawan.payments.*', 'member.finance.payments')
+                                ? 'bg-red-50 text-red-600'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
+                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 7h18M5 11h14M7 15h10M9 19h6" />
+                            </svg>
+                            <span>Pembayaran</span>
+                        </a>
 
 
                         {{-- Reward --}}
 
-                        <a href="#"
+                        <a href="{{ auth()->user()->role === 'admin' ? route('admin.rewards.index') : route('aganda.rewards.index') }}"
                             class="mb-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-                               text-slate-500 hover:bg-slate-50 hover:text-slate-700">
+                            {{ request()->routeIs('aganda.rewards.*', 'admin.rewards.*')
+                                ? 'bg-red-50 text-red-600'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700' }}">
 
                             <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
@@ -241,23 +262,6 @@
 
                         </a>
 
-
-                        {{-- Riwayat --}}
-
-                        <a href="#"
-                            class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-                               text-slate-500 hover:bg-slate-50 hover:text-slate-700">
-
-                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                    d="M9 5h6M9 3h6v2H9V3zM7 5H5v16h14V5h-2M9 10h6M9 14h6M9 18h4" />
-                            </svg>
-
-                            <span>
-                                Riwayat
-                            </span>
-
-                        </a>
 
                     </div>
 

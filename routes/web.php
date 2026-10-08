@@ -1,14 +1,20 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\BonusController;
+use App\Http\Controllers\Admin\BonusController as AdminBonusController;
+use App\Http\Controllers\Admin\CalonController;
+use App\Http\Controllers\Admin\CalonPaymentController;
+use App\Http\Controllers\Admin\CalonPaymentController as AdminCalonPaymentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MemberController;
-use App\Http\Controllers\Admin\CalonPaymentController;
-use App\Http\Controllers\Admin\BonusController;
+use App\Http\Controllers\Admin\MemberController as AdminMemberController;
+use App\Http\Controllers\Admin\RewardController;
 use App\Http\Controllers\AgandaGroupController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Karyawan\KaryawanDashboardController;
+use App\Http\Controllers\MemberFinanceController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('homepage');
@@ -49,6 +55,23 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/members', [MemberController::class, 'index'])
             ->name('members.index');
 
+        Route::get('/calons/create', [CalonController::class, 'create'])
+            ->name('calons.create');
+
+        Route::post('/calons', [CalonController::class, 'store'])
+            ->name('calons.store');
+
+        Route::prefix('rewards')
+            ->name('rewards.')
+            ->controller(RewardController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/export', 'export')->name('export');
+                Route::get('/history', 'history')->name('history');
+                Route::get('/{group}/members/{user}', 'show')->name('show');
+                Route::post('/{group}/members/{user}/levels/{level}/verify', 'verify')->name('verify');
+            });
+
         Route::prefix('bonus')
             ->name('bonus.')
             ->group(function () {
@@ -75,6 +98,15 @@ Route::middleware(['auth', 'role:karyawan'])
     ->group(function () {
         Route::get('/dashboard', [KaryawanDashboardController::class, 'index'])
             ->name('dashboard');
+
+        Route::get('/members', [AdminMemberController::class, 'index'])
+            ->name('members.index');
+
+        Route::get('/bonus', [AdminBonusController::class, 'index'])
+            ->name('bonus.index');
+
+        Route::get('/payments', [AdminCalonPaymentController::class, 'index'])
+            ->name('payments.index');
     });
 
 Route::middleware(['auth', 'role:member'])
@@ -84,6 +116,12 @@ Route::middleware(['auth', 'role:member'])
         Route::get('/dashboard', function () {
             return view('member.dashboard');
         })->name('dashboard');
+
+        Route::get('/bonus', [MemberFinanceController::class, 'bonus'])
+            ->name('finance.bonus');
+
+        Route::get('/payments', [MemberFinanceController::class, 'payments'])
+            ->name('finance.payments');
     });
 
 Route::middleware(['auth', 'role:admin,karyawan,member'])
@@ -98,6 +136,13 @@ Route::middleware(['auth', 'role:admin,karyawan,member'])
 
         Route::post('/groups', [AgandaGroupController::class, 'store'])
             ->name('groups.store');
+
+        Route::get('/rewards', function () {
+            return view('aganda.rewards.index');
+        })->name('rewards.index');
+
+        Route::delete('/groups/{group}/members/{member}', [AgandaGroupController::class, 'cancelMember'])
+            ->name('groups.members.cancel');
 
         Route::get('/groups/{group}', [AgandaGroupController::class, 'show'])
             ->name('groups.show');

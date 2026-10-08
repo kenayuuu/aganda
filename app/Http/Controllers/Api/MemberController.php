@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AgandaGroup;
 use App\Models\AgandaGroupMember;
+use App\Models\BonusTransaction;
 use App\Models\Calon;
 use App\Models\CalonPayment;
 use App\Models\User;
-use App\Models\BonusTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +20,7 @@ class MemberController extends Controller
     {
         $user = $request->user();
 
-        if (!in_array($user->role, ['admin', 'karyawan'])) {
+        if (! in_array($user->role, ['admin', 'karyawan'])) {
             return response()->json([
                 'message' => 'Hanya admin atau karyawan yang dapat melihat calon.',
             ], 403);
@@ -35,21 +35,38 @@ class MemberController extends Controller
             ], 403);
         }
 
-        $calons = Calon::with('packageKegiatan')
-            ->where('package_kegiatan_id', $group->package_kegiatan_id)
-            ->whereNotIn('id', function ($query) use ($group) {
-                $query->select('calon_id')
-                    ->from('aganda_group_members')
-                    ->where('group_id', $group->id);
-            })
-            ->orderBy('nama_lengkap')
-            ->get();
+        $totalMembers = $group->members()
+            ->where('status', 'active')
+            ->count();
+        $totalDownlines = $group->members()
+            ->where('registered_by', $user->id)
+            ->where('status', 'active')
+            ->count();
+        $isAtCapacity = $totalDownlines >= AgandaGroup::MAX_DIRECT_DOWNLINES;
+
+        $calons = collect();
+
+        if (! $isAtCapacity) {
+            $calons = Calon::with('packageKegiatan')
+                ->where('package_kegiatan_id', $group->package_kegiatan_id)
+                ->whereNotIn('id', function ($query) use ($group) {
+                    $query->select('calon_id')
+                        ->from('aganda_group_members')
+                        ->where('group_id', $group->id);
+                })
+                ->orderBy('nama_lengkap')
+                ->get();
+        }
 
         return response()->json([
             'group' => [
                 'id' => $group->id,
                 'kode_group' => $group->kode_group,
                 'package_kegiatan_id' => $group->package_kegiatan_id,
+                'total_members' => $totalMembers,
+                'total_downlines' => $totalDownlines,
+                'max_direct_downlines' => AgandaGroup::MAX_DIRECT_DOWNLINES,
+                'is_at_capacity' => $isAtCapacity,
             ],
             'calons' => $calons->map(function ($calon) {
                 $dpPayment = CalonPayment::where('calon_id', $calon->id)
@@ -95,6 +112,15 @@ class MemberController extends Controller
             ], 403);
         }
 
+        if ($group->members()
+            ->where('registered_by', $sponsor->id)
+            ->where('status', 'active')
+            ->count() >= AgandaGroup::MAX_DIRECT_DOWNLINES) {
+            return response()->json([
+                'message' => 'Anda sudah mencapai batas maksimal 20 downline langsung (Line 1) di group ini.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'calon_id' => [
                 'required',
@@ -105,7 +131,7 @@ class MemberController extends Controller
         $calon = Calon::with('packageKegiatan')
             ->findOrFail($validated['calon_id']);
 
-        if (!$calon->packageKegiatan) {
+        if (! $calon->packageKegiatan) {
             return response()->json([
                 'message' => 'Paket kegiatan calon tidak ditemukan.',
             ], 422);
@@ -144,7 +170,7 @@ class MemberController extends Controller
             ->latest('id')
             ->first();
 
-        if (!$dpPayment) {
+        if (! $dpPayment) {
             return response()->json([
                 'message' => 'Calon belum melakukan pembayaran DP.',
             ], 422);
@@ -175,7 +201,7 @@ class MemberController extends Controller
         $userBaru = false;
         $bonus = null;
 
-        DB::transaction(function () use (
+        $registrationSucceeded = DB::transaction(function () use (
             $calon,
             $group,
             $temporaryPassword,
@@ -185,13 +211,24 @@ class MemberController extends Controller
             &$userBaru,
             &$bonus
         ) {
+            $lockedGroup = AgandaGroup::query()
+                ->lockForUpdate()
+                ->findOrFail($group->id);
+
+            if ($lockedGroup->members()
+                ->where('registered_by', $sponsor->id)
+                ->where('status', 'active')
+                ->count() >= AgandaGroup::MAX_DIRECT_DOWNLINES) {
+                return false;
+            }
+
             $memberUser = User::where('calon_id', $calon->id)
                 ->lockForUpdate()
                 ->first();
 
-            if (!$memberUser) {
+            if (! $memberUser) {
                 do {
-                    $memberId = 'AGD-' . strtoupper(Str::random(8));
+                    $memberId = 'AGD-'.strtoupper(Str::random(8));
                 } while (
                     User::where('member_id', $memberId)->exists()
                 );
@@ -232,9 +269,17 @@ class MemberController extends Controller
                 'type' => 'line_1',
                 'amount' => 3000000,
                 'status' => 'confirmed',
-                'description' => 'Komisi Line 1 dari pembayaran DP ' . $memberUser->name,
+                'description' => 'Komisi Line 1 dari pembayaran DP '.$memberUser->name,
             ]);
+
+            return true;
         });
+
+        if (! $registrationSucceeded) {
+            return response()->json([
+                'message' => 'Anda sudah mencapai batas maksimal 20 downline langsung (Line 1) di group ini.',
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'Calon berhasil didaftarkan sebagai member dan bonus Line 1 berhasil dibuat.',

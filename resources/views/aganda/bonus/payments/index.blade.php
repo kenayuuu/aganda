@@ -9,17 +9,19 @@
                     Pembayaran
                 </h1>
                 <p class="mt-1 text-sm text-slate-500">
-                    Kelola pencatatan pembayaran calon secara manual.
+                    {{ auth()->user()->role === 'karyawan' ? 'Riwayat pembayaran calon pada group yang Anda kelola.' : 'Kelola pencatatan pembayaran calon secara manual.' }}
                 </p>
             </div>
 
-            <a href="{{ route('admin.bonus.payments.create') }}"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Tambah Pembayaran
-            </a>
+            @if (auth()->user()->role === 'admin')
+                <a href="{{ route('admin.bonus.payments.create') }}"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah Pembayaran
+                </a>
+            @endif
         </div>
 
         @if (session('success'))
@@ -35,7 +37,7 @@
         @endif
 
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <form action="{{ route('admin.bonus.payments.index') }}" method="GET" class="grid gap-4 md:grid-cols-4">
+            <form action="{{ auth()->user()->role === 'karyawan' ? route('karyawan.payments.index') : route('admin.bonus.payments.index') }}" method="GET" class="grid gap-4 md:grid-cols-4">
                 <div class="md:col-span-2">
                     <label class="mb-2 block text-sm font-semibold text-slate-700">
                         Cari Calon
@@ -92,7 +94,7 @@
                         Filter
                     </button>
 
-                    <a href="{{ route('admin.bonus.payments.index') }}"
+                    <a href="{{ auth()->user()->role === 'karyawan' ? route('karyawan.payments.index') : route('admin.bonus.payments.index') }}"
                         class="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
                         Reset
                     </a>
