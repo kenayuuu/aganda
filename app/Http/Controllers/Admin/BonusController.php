@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AgandaGroupMember;
+use App\Models\BonusAllocation;
 use App\Models\BonusTransaction;
 use App\Models\User;
 use App\Services\BonusService;
@@ -12,7 +14,30 @@ class BonusController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::whereIn('role', ['member', 'karyawan'])
+        $user = $request->user();
+
+        $accessibleUserIds = User::query()
+            ->whereIn('role', ['member', 'karyawan']);
+
+        if ($user->role === 'karyawan') {
+            $managedMemberIds = User::query()
+                ->where('role', 'member')
+                ->whereIn('calon_id', AgandaGroupMember::query()
+                    ->where('status', 'active')
+                    ->whereHas('group', function ($groupQuery) use ($user) {
+                        $groupQuery->where('owner_id', $user->id);
+                    })
+                    ->select('calon_id'))
+                ->select('id');
+
+            $accessibleUserIds->where(function ($scopeQuery) use ($user, $managedMemberIds) {
+                $scopeQuery->where('id', $user->id)
+                    ->orWhereIn('id', $managedMemberIds);
+            });
+        }
+
+        $query = User::query()
+            ->whereIn('id', (clone $accessibleUserIds)->select('id'))
             ->with([
                 'calon.packageKegiatan',
                 'parent',
@@ -84,19 +109,11 @@ class BonusController extends Controller
             ];
         });
 
-        $totalBonus = BonusTransaction::whereIn(
-            'user_id',
-            User::whereIn('role', ['member', 'karyawan'])
-                ->select('id')
-        )
+        $totalBonus = BonusTransaction::whereIn('user_id', (clone $accessibleUserIds)->select('id'))
             ->where('status', 'confirmed')
             ->sum('amount');
 
-        $totalAllocated = \App\Models\BonusAllocation::whereIn(
-            'user_id',
-            User::whereIn('role', ['member', 'karyawan'])
-                ->select('id')
-        )
+        $totalAllocated = BonusAllocation::whereIn('user_id', (clone $accessibleUserIds)->select('id'))
             ->sum('amount');
 
         $totalAvailableBonus = max(

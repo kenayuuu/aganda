@@ -9,6 +9,8 @@ class AgandaGroup extends Model
 {
     use HasFactory;
 
+    public const MAX_DIRECT_DOWNLINES = 20;
+
     protected $table = 'aganda_groups';
 
     protected $fillable = [

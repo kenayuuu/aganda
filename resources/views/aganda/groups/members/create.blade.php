@@ -242,6 +242,9 @@
                     <p class="mt-1 text-sm text-slate-500">
                         Pilih calon atau jamaah yang akan ditambahkan ke group.
                     </p>
+                    <p class="mt-2 text-xs font-semibold text-emerald-700">
+                        Downline langsung (Line 1): {{ $totalDownlines }} dari {{ \App\Models\AgandaGroup::MAX_DIRECT_DOWNLINES }}
+                    </p>
 
                 </div>
 
@@ -324,7 +327,16 @@
 
 
                         {{-- Jika tidak ada calon --}}
-                        @if ($calons->isEmpty())
+                        @if ($isAtCapacity)
+                            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                                <p class="text-sm font-semibold text-amber-900">
+                                    Batas downline langsung sudah tercapai
+                                </p>
+                                <p class="mt-1 text-sm leading-6 text-amber-700">
+                                    Setiap sponsor dapat memiliki maksimal {{ \App\Models\AgandaGroup::MAX_DIRECT_DOWNLINES }} downline langsung (Line 1) di group ini.
+                                </p>
+                            </div>
+                        @elseif ($calons->isEmpty())
                             <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
 
                                 <div class="flex gap-3">
@@ -431,9 +443,9 @@
                         </a>
 
 
-                        <button type="submit" @if ($calons->isEmpty()) disabled @endif
+                        <button type="submit" @if ($isAtCapacity || $calons->isEmpty()) disabled @endif
                             class="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition
-                                @if ($calons->isEmpty()) cursor-not-allowed bg-slate-300
+                                @if ($isAtCapacity || $calons->isEmpty()) cursor-not-allowed bg-slate-300
                                 @else
                                     bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 @endif">
 

@@ -9,13 +9,13 @@
             </h1>
 
             <p class="mt-1 text-xs text-slate-500">
-                Daftar seluruh member yang terdaftar dalam sistem AGANDA.
+                {{ auth()->user()->role === 'karyawan' ? 'Daftar member aktif pada group yang Anda kelola.' : 'Daftar seluruh member yang terdaftar dalam sistem AGANDA.' }}
             </p>
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 
-            <form method="GET" action="{{ route('admin.members.index') }}" class="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <form method="GET" action="{{ auth()->user()->role === 'karyawan' ? route('karyawan.members.index') : route('admin.members.index') }}" class="grid grid-cols-1 gap-3 md:grid-cols-4">
 
                 <div class="md:col-span-2">
                     <label class="mb-1.5 block text-xs font-semibold text-slate-700">
@@ -76,7 +76,7 @@
                         Filter
                     </button>
 
-                    <a href="{{ route('admin.members.index') }}"
+                    <a href="{{ auth()->user()->role === 'karyawan' ? route('karyawan.members.index') : route('admin.members.index') }}"
                         class="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
                         Reset
                     </a>

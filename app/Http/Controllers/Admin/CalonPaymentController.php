@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\AgandaGroupMember;
 use App\Models\BonusTransaction;
 use App\Models\Calon;
+use App\Models\CalonPayment;
 use App\Models\User;
 use App\Services\BonusService;
-use App\Models\CalonPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,11 +16,24 @@ class CalonPaymentController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+
         $query = CalonPayment::with([
             'calon',
             'packageKegiatan',
             'confirmedBy',
         ]);
+
+        if ($user->role === 'karyawan') {
+            $managedCalonIds = AgandaGroupMember::query()
+                ->where('status', 'active')
+                ->whereHas('group', function ($groupQuery) use ($user) {
+                    $groupQuery->where('owner_id', $user->id);
+                })
+                ->select('calon_id');
+
+            $query->whereIn('calon_id', $managedCalonIds);
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -45,10 +58,7 @@ class CalonPaymentController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view(
-            'aganda.bonus.payments.index',
-            compact('payments')
-        );
+        return view('aganda.bonus.payments.index', compact('payments'));
     }
 
     public function create()
@@ -76,17 +86,17 @@ class CalonPaymentController extends Controller
         $calon = Calon::with('packageKegiatan')
             ->findOrFail($validated['calon_id']);
 
-        if (!$calon->packageKegiatan) {
+        if (! $calon->packageKegiatan) {
             return back()
                 ->withInput()
                 ->with('error', 'Paket calon tidak ditemukan.');
         }
 
-        $member = \App\Models\User::where('calon_id', $calon->id)
+        $member = User::where('calon_id', $calon->id)
             ->where('role', 'member')
             ->first();
 
-        if (!$member) {
+        if (! $member) {
             return back()
                 ->withInput()
                 ->with(
@@ -126,7 +136,7 @@ class CalonPaymentController extends Controller
             ->where('status', 'active')
             ->first();
 
-        if (!$groupMember) {
+        if (! $groupMember) {
             return back()
                 ->withInput()
                 ->with(
@@ -138,7 +148,7 @@ class CalonPaymentController extends Controller
         $sponsor = null;
 
         if ($member->parent_id) {
-            $sponsor = \App\Models\User::where('id', $member->parent_id)
+            $sponsor = User::where('id', $member->parent_id)
                 ->where('role', 'member')
                 ->first();
         }
@@ -167,7 +177,7 @@ class CalonPaymentController extends Controller
                 return;
             }
 
-            if (!$sponsor) {
+            if (! $sponsor) {
                 return;
             }
 
@@ -190,7 +200,7 @@ class CalonPaymentController extends Controller
                 'type' => 'line_1',
                 'amount' => 3000000,
                 'status' => 'confirmed',
-                'description' => 'Komisi Line 1 dari pembayaran DP ' . $member->name,
+                'description' => 'Komisi Line 1 dari pembayaran DP '.$member->name,
             ]);
         });
 
@@ -208,7 +218,7 @@ class CalonPaymentController extends Controller
 
         $allocation = $bonusService->allocateBonusToPackage($user);
 
-        if (!$allocation) {
+        if (! $allocation) {
             return back()->with(
                 'error',
                 'Tidak ada bonus yang dapat dialokasikan ke pembayaran paket.'
