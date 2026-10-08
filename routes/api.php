@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\StructureController;
 use App\Http\Controllers\Api\WithdrawalController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AdminBonusController;
+use App\Http\Controllers\Api\BonusWithdrawalController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
@@ -41,8 +42,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bonus', [BonusController::class, 'index']);
     Route::get('/bonus/history', [BonusController::class, 'history']);
     Route::post('/bonus/allocate-package', [BonusController::class, 'allocatePackage']);
-    Route::get('/withdrawals', [WithdrawalController::class, 'index']);
-    Route::post('/withdrawals', [WithdrawalController::class, 'store']);
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::get('/admin/users/{user}', [AdminUserController::class, 'show']);
     Route::get('/admin/withdrawals', [AdminWithdrawalController::class, 'index']);
@@ -50,4 +49,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/admin/withdrawals/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject']);
     Route::put('/admin/withdrawals/{withdrawal}/paid', [AdminWithdrawalController::class, 'paid']);
     Route::get('/admin/bonus', [AdminBonusController::class, 'index']);
+    Route::get('/bonus/withdrawals', [BonusWithdrawalController::class, 'index']);
+    Route::post('/bonus/withdrawals', [BonusWithdrawalController::class, 'store']);
 });
